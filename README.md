@@ -48,7 +48,7 @@ npm start          # inicia a API em http://localhost:3000
 ```
 
 Deixe esse terminal aberto. Para testar se subiu, acesse
-`http://localhost:3000` no navegador — deve aparecer um JSON com `ok: true`.
+`http://localhost:3000` no navegador.
 
 ### Passo B — Aplicativo
 
