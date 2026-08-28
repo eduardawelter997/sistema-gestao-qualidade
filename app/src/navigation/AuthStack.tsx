@@ -1,0 +1,23 @@
+/**
+ * Pilha de telas exibida quando NÃO há usuário logado: Login e Cadastro.
+ */
+import React from 'react';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+
+import { AuthStackParamList } from './types';
+import LoginScreen from '../screens/LoginScreen';
+import CadastroScreen from '../screens/CadastroScreen';
+
+const Stack = createNativeStackNavigator<AuthStackParamList>();
+
+export default function AuthStack() {
+  return (
+    <Stack.Navigator
+      initialRouteName="Login"
+      screenOptions={{ headerShown: false }}
+    >
+      <Stack.Screen name="Login" component={LoginScreen} />
+      <Stack.Screen name="Cadastro" component={CadastroScreen} />
+    </Stack.Navigator>
+  );
+}

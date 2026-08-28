@@ -1,0 +1,30 @@
+# Dependências
+node_modules/
+
+# Backend - banco de dados local (cada dev gera o seu com "npm run seed")
+backend/database.sqlite
+backend/database.sqlite-shm
+backend/database.sqlite-wal
+
+# Expo / React Native
+app/.expo/
+app/web-build/
+app/dist/
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+
+# Variáveis de ambiente
+.env
+.env.local
+
+# Logs
+npm-debug.log*
+*.log
+
+# Editor / OS
+.vscode/
+.DS_Store
+Thumbs.db

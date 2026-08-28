@@ -1,0 +1,20 @@
+{
+  "expo": {
+    "name": "Sistema de Gestão da Qualidade",
+    "slug": "sistema-gestao-qualidade",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "resizeMode": "contain",
+      "backgroundColor": "#1E5A8E"
+    },
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "package": "com.exemplo.gestaoqualidade"
+    }
+  }
+}
