@@ -19,6 +19,7 @@ import Header from '../components/Header';
 import StatusBadge from '../components/StatusBadge';
 import { colors } from '../theme/colors';
 import { buscarDashboard, DashboardResposta } from '../services/api';
+import { useNavigation } from '@react-navigation/native';
 
 // Cartão de número da "Visão geral"
 function CartaoIndicador({
@@ -39,15 +40,24 @@ function CartaoIndicador({
 }
 
 // Botão de ação rápida
-function BotaoAcao({ texto }: { texto: string }) {
+
+function BotaoAcao({ texto, onPress }: { texto: string; onPress?: () => void }) {
   return (
-    <TouchableOpacity style={styles.acaoRapida} activeOpacity={0.7}>
+    <TouchableOpacity style={styles.acaoRapida} activeOpacity={0.7} onPress={onPress}>
       <Text style={styles.acaoRapidaTexto}>{texto}</Text>
     </TouchableOpacity>
   );
 }
+// function BotaoAcao({ texto }: { texto: string }) {
+//   return (
+//     <TouchableOpacity style={styles.acaoRapida} activeOpacity={0.7}>
+//       <Text style={styles.acaoRapidaTexto}>{texto}</Text>
+//     </TouchableOpacity>
+//   );
+// }
 
 export default function InicioScreen() {
+  const navigation = useNavigation<any>();
   const [dados, setDados] = useState<DashboardResposta | null>(null);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
@@ -124,7 +134,10 @@ export default function InicioScreen() {
             {/* Ações rápidas */}
             <Text style={styles.tituloSecao}>Ações rápidas</Text>
             <View style={styles.grid}>
-              <BotaoAcao texto="+ Nova OP" />
+              <BotaoAcao 
+                texto="+ Nova OP" 
+                onPress={() => navigation.navigate('NovaOp')} 
+              />
               <BotaoAcao texto="+ Nova ocorrência" />
             </View>
             <View style={styles.grid}>
