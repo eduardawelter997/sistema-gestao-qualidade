@@ -110,3 +110,15 @@ export function alternarFavorito(id: number) {
     { method: 'PATCH' }
   );
 }
+
+export function criarRegistro(dados: {
+  tipo: string;
+  titulo: string;
+  descricao?: string;
+  status?: string;
+}) {
+  return request<{ id: number; sucesso: boolean }>('/api/registros', {
+    method: 'POST',
+    body: JSON.stringify(dados),
+  });
+}

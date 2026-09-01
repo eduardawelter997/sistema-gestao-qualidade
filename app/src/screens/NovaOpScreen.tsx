@@ -11,7 +11,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { colors } from '../theme/colors';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { listarRegistros, criarRegistro } from '../services/api';
 
 export default function NovaOpScreen() {
   const navigation = useNavigation<any>();
@@ -34,7 +34,7 @@ export default function NovaOpScreen() {
   // Estados para a Situação da Ordem
   const [situacao, setSituacao] = useState('Em andamento');
   const [mostrarListaSituacao, setMostrarListaSituacao] = useState(false);
-  const situacoesOp = ['Aberta', 'Em andamento', 'Concluída'];
+  const situacoesOp = ['Aberta', 'Em andamento', 'Concluído'];
 
   useEffect(() => {
     carregarClientes();
@@ -42,16 +42,8 @@ export default function NovaOpScreen() {
 
   const carregarClientes = async () => {
     try {
-      const token = await AsyncStorage.getItem('@gestao_qualidade:token');
-      const resposta = await fetch('http://localhost:3000/api/registros?tipo=op', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-      const dados = await resposta.json();
-      if (dados.registros) {
-        setClientesLista(dados.registros);
-      }
+      const { registros } = await listarRegistros('op');
+      setClientesLista(registros);
     } catch (error) {
       console.log('Erro ao carregar do banco:', error);
     }
@@ -75,32 +67,17 @@ export default function NovaOpScreen() {
     }
 
     try {
-      const token = await AsyncStorage.getItem('@gestao_qualidade:token');
-
-      const novaOrdem = {
+      await criarRegistro({
         tipo: 'op',
         titulo: `OP #${numeroOp} - ${cliente}`,
-        descricao: `Responsável: ${responsavel} | Produto: ${produto} | Processo: ${tipoProcesso} | Situação: ${situacao} | Data: ${dataAbertura}`,
-      };
-
-      const resposta = await fetch('http://localhost:3000/api/registros', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify(novaOrdem),
+        descricao: `Responsável: ${responsavel} | Produto: ${produto} | Processo: ${tipoProcesso} | Data: ${dataAbertura}`,
+        status: situacao,
       });
 
-      if (resposta.ok) {
-        Alert.alert('Sucesso', 'Ordem de produção salva com sucesso no banco!');
-        navigation.goBack();
-      } else {
-        Alert.alert('Erro', 'O servidor recusou o salvamento da OP.');
-      }
-    } catch (error) {
-      console.log('Erro ao conectar com a API:', error);
-      Alert.alert('Erro', 'Não foi possível conectar ao servidor.');
+      Alert.alert('Sucesso', 'Ordem de produção salva com sucesso no banco!');
+      navigation.goBack();
+    } catch (error: any) {
+      Alert.alert('Erro', error.message || 'Não foi possível conectar ao servidor.');
     }
   };
 
