@@ -40,7 +40,6 @@ function CartaoIndicador({
 }
 
 // Botão de ação rápida
-
 function BotaoAcao({ texto, onPress }: { texto: string; onPress?: () => void }) {
   return (
     <TouchableOpacity style={styles.acaoRapida} activeOpacity={0.7} onPress={onPress}>
@@ -48,13 +47,6 @@ function BotaoAcao({ texto, onPress }: { texto: string; onPress?: () => void }) 
     </TouchableOpacity>
   );
 }
-// function BotaoAcao({ texto }: { texto: string }) {
-//   return (
-//     <TouchableOpacity style={styles.acaoRapida} activeOpacity={0.7}>
-//       <Text style={styles.acaoRapidaTexto}>{texto}</Text>
-//     </TouchableOpacity>
-//   );
-// }
 
 export default function InicioScreen() {
   const navigation = useNavigation<any>();

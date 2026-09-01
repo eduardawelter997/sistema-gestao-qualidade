@@ -33,7 +33,7 @@ export default function AppTabs() {
             Favoritos: 'star',
             Mais: 'ellipsis-horizontal',
             NovaOp: 'add-circle',
-            
+            CadastrarCliente: 'person-add',
           };
           return <Ionicons name={nomes[route.name]} size={size} color={color} />;
         },

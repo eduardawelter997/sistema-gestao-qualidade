@@ -91,7 +91,7 @@ router.patch('/registros/:id/favorito', (req, res) => {
 });
 
 router.post('/registros', (req, res) => {
-  const { tipo, titulo, descricao } = req.body;
+  const { tipo, titulo, descricao, status } = req.body;
 
   if (!titulo) {
     return res.status(400).json({ erro: 'O título/nome é obrigatório.' });
@@ -99,8 +99,8 @@ router.post('/registros', (req, res) => {
 
   try {
     const codigoGerado = `REG-${Date.now().toString().slice(-6)}`;
-    const statusInicial = 'Em andamento';
-    const dataAtual = new Date().toISOString().split('T')[0]; // 👈 Pega a data atual no formato YYYY-MM-DD
+    const statusInicial = status || 'Em andamento';
+    const dataAtual = new Date().toISOString().split('T')[0]; // Data atual no formato YYYY-MM-DD
 
     const stmt = db.prepare(
       'INSERT INTO registros (codigo, tipo, titulo, descricao, status, data) VALUES (?, ?, ?, ?, ?, ?)'

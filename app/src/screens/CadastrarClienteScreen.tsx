@@ -11,7 +11,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { colors } from '../theme/colors';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { criarRegistro } from '../services/api';
 
 export default function CadastrarClienteScreen() {
   const navigation = useNavigation<any>();
@@ -89,34 +89,16 @@ export default function CadastrarClienteScreen() {
     }
 
     try {
-      
-      const token = await AsyncStorage.getItem('@gestao_qualidade:token');
-
-      const novoCadastro = {
-        tipo: 'op', 
+      await criarRegistro({
+        tipo: tipoCadastro,
         titulo: nome,
         descricao: `CPF/CNPJ: ${cpfCnpj} | E-mail: ${email} | Tel: ${telefone} | Obs: ${observacoes}`,
-      };
-
-      
-      const resposta = await fetch('http://localhost:3000/api/registros', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`, 
-        },
-        body: JSON.stringify(novoCadastro),
       });
 
-      if (resposta.ok) {
-        Alert.alert('Sucesso', 'Cadastro realizado com sucesso no banco!');
-        navigation.goBack();
-      } else {
-        Alert.alert('Erro', 'O servidor recusou o salvamento.');
-      }
-    } catch (error) {
-      console.log('Erro ao conectar com a API:', error);
-      Alert.alert('Erro', 'Não foi possível conectar ao servidor na porta 3000.');
+      Alert.alert('Sucesso', 'Cadastro realizado com sucesso no banco!');
+      navigation.goBack();
+    } catch (error: any) {
+      Alert.alert('Erro', error.message || 'Não foi possível conectar ao servidor.');
     }
   };
 
