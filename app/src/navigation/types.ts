@@ -11,4 +11,6 @@ export type AppTabParamList = {
   Busca: undefined;
   Favoritos: undefined;
   Mais: undefined;
+  NovaOp: undefined;
+  CadastrarCliente: undefined;
 };

@@ -11,6 +11,7 @@ import { useAuth } from '../context/AuthContext';
 import { colors } from '../theme/colors';
 import AuthStack from './AuthStack';
 import AppTabs from './AppTabs';
+import NovaOpScreen from '../screens/NovaOpScreen';
 
 export default function RootNavigator() {
   const { usuario, carregando } = useAuth();
