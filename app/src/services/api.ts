@@ -2,6 +2,7 @@
  * Camada de comunicação com a API.
  * Centraliza as chamadas HTTP (fetch) e adiciona o token de autenticação.
  */
+import { Platform } from 'react-native';
 import { API_URL } from '../config/api';
 
 // Token do usuário logado. É definido pelo AuthContext após o login.
@@ -24,13 +25,30 @@ export interface Usuario {
 
 export interface Registro {
   id: number;
-  tipo: 'op' | 'ocorrencia' | 'acao' | 'recebimento';
+  tipo: string;
   codigo: string;
   titulo: string;
   descricao: string;
   status: string;
   data: string;
   favorito: number;
+  responsavel?: string | null;
+  produto?: string | null;
+  processo?: string | null;
+  op_id?: number | null;
+}
+
+export interface Anexo {
+  id: number;
+  registro_id: number;
+  nome_arquivo: string;
+  url: string;
+}
+
+export interface UsuarioResumo {
+  id: number;
+  nome: string;
+  cargo: string;
 }
 
 /**
@@ -116,9 +134,88 @@ export function criarRegistro(dados: {
   titulo: string;
   descricao?: string;
   status?: string;
+  codigo?: string;
+  responsavel?: string;
+  produto?: string;
+  processo?: string;
+  opId?: number;
+  data?: string;
 }) {
   return request<{ id: number; sucesso: boolean }>('/api/registros', {
     method: 'POST',
     body: JSON.stringify(dados),
   });
+}
+
+export function buscarRegistro(id: number) {
+  return request<{ registro: Registro }>(`/api/registros/${id}`);
+}
+
+export function atualizarRegistro(
+  id: number,
+  dados: {
+    tipo?: string;
+    titulo?: string;
+    descricao?: string;
+    status?: string;
+    responsavel?: string;
+    produto?: string;
+    processo?: string;
+    data?: string;
+  }
+) {
+  return request<{ sucesso: boolean }>(`/api/registros/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(dados),
+  });
+}
+
+export function buscarTimelineOp(id: number) {
+  return request<{ timeline: Registro[] }>(`/api/registros/${id}/timeline`);
+}
+
+export function listarUsuarios() {
+  return request<{ usuarios: UsuarioResumo[] }>('/api/usuarios');
+}
+
+export function listarAnexos(registroId: number) {
+  return request<{ anexos: Anexo[] }>(`/api/registros/${registroId}/anexos`);
+}
+
+// Upload de arquivo: não usa o helper request() porque o corpo é
+// multipart/form-data (FormData), não JSON.
+export async function enviarAnexo(
+  registroId: number,
+  arquivo: { uri: string; name: string; type: string }
+) {
+  const form = new FormData();
+  if (Platform.OS === 'web') {
+    // No navegador o FormData precisa de um Blob de verdade, não do
+    // objeto { uri, name, type } (esse formato só funciona no Android/iOS).
+    const respostaArquivo = await fetch(arquivo.uri);
+    const blob = await respostaArquivo.blob();
+    form.append('arquivo', blob, arquivo.name);
+  } else {
+    form.append('arquivo', arquivo as any);
+  }
+
+  const headers: Record<string, string> = {};
+  if (tokenAtual) headers.Authorization = `Bearer ${tokenAtual}`;
+
+  let resposta: Response;
+  try {
+    resposta = await fetch(`${API_URL}/api/registros/${registroId}/anexos`, {
+      method: 'POST',
+      headers,
+      body: form,
+    });
+  } catch (e) {
+    throw new Error('Não foi possível enviar o arquivo. Verifique sua conexão.');
+  }
+
+  const corpo = await resposta.json().catch(() => ({}));
+  if (!resposta.ok) {
+    throw new Error((corpo as any).erro || 'Erro ao enviar o arquivo.');
+  }
+  return corpo as Anexo;
 }

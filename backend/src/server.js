@@ -6,6 +6,7 @@ const express = require('express');
 const cors = require('cors');
 
 const { init } = require('./db');
+const { uploadsDir } = require('./upload');
 const { PORT } = require('./config');
 const authRoutes = require('./routes/auth');
 const registrosRoutes = require('./routes/registros');
@@ -16,6 +17,7 @@ init();
 const app = express();
 app.use(cors());            // libera o acesso a partir do app mobile
 app.use(express.json());    // entende corpo de requisição em JSON
+app.use('/uploads', express.static(uploadsDir)); // fotos/documentos anexados
 
 // Rota simples para testar se a API está no ar
 app.get('/', (req, res) => {

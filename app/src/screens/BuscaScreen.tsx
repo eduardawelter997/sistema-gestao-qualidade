@@ -25,6 +25,7 @@ const FILTROS = [
   { valor: 'todos', rotulo: 'Todos' },
   { valor: 'op', rotulo: 'OP' },
   { valor: 'ocorrencia', rotulo: 'Ocorrência' },
+  { valor: 'recebimento', rotulo: 'Recebimento' },
   { valor: 'acao', rotulo: 'Ações' },
 ];
 
@@ -144,6 +145,7 @@ const styles = StyleSheet.create({
   },
   filtros: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: 8,
     paddingHorizontal: 16,
     marginTop: 12,

@@ -6,6 +6,9 @@ backend/database.sqlite
 backend/database.sqlite-shm
 backend/database.sqlite-wal
 
+# Backend - fotos/documentos enviados pelo app
+backend/uploads/
+
 # Expo / React Native
 app/.expo/
 app/web-build/

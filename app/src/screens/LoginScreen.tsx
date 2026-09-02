@@ -8,7 +8,6 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  Alert,
   ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -17,6 +16,7 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { colors } from '../theme/colors';
 import { AuthStackParamList } from '../navigation/types';
 import { useAuth } from '../context/AuthContext';
+import { alertar } from '../utils/alerta';
 
 // Tipagem das props de navegação desta tela
 type Props = NativeStackScreenProps<AuthStackParamList, 'Login'>;
@@ -32,7 +32,7 @@ export default function LoginScreen({ navigation }: Props) {
   // Ação do botão "Entrar": chama a API de autenticação
   async function handleEntrar() {
     if (!email || !senha) {
-      Alert.alert('Atenção', 'Preencha e-mail e senha para entrar.');
+      alertar('Atenção', 'Preencha e-mail e senha para entrar.');
       return;
     }
     setCarregando(true);
@@ -40,7 +40,7 @@ export default function LoginScreen({ navigation }: Props) {
       await entrar(email, senha);
       // Ao logar com sucesso, a navegação troca sozinha para as abas do app.
     } catch (e: any) {
-      Alert.alert('Erro ao entrar', e.message);
+      alertar('Erro ao entrar', e.message);
     } finally {
       setCarregando(false);
     }
@@ -106,7 +106,7 @@ export default function LoginScreen({ navigation }: Props) {
           {/* Link "Esqueci minha senha" */}
           <TouchableOpacity
             onPress={() =>
-              Alert.alert('Recuperar senha', 'Fluxo de recuperação de senha.')
+              alertar('Recuperar senha', 'Fluxo de recuperação de senha.')
             }
           >
             <Text style={styles.forgotText}>Esqueci minha senha</Text>

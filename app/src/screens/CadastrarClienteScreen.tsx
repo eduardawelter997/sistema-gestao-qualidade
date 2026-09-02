@@ -6,12 +6,12 @@ import {
   ScrollView,
   TextInput,
   TouchableOpacity,
-  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { colors } from '../theme/colors';
 import { criarRegistro } from '../services/api';
+import { alertar } from '../utils/alerta';
 
 export default function CadastrarClienteScreen() {
   const navigation = useNavigation<any>();
@@ -84,7 +84,7 @@ export default function CadastrarClienteScreen() {
   // Função de salvar
   const handleSalvarCadastro = async () => {
     if (!nome || !cpfCnpj) {
-      Alert.alert('Atenção', 'Por favor, preencha os campos obrigatórios.');
+      alertar('Atenção', 'Por favor, preencha os campos obrigatórios.');
       return;
     }
 
@@ -95,10 +95,10 @@ export default function CadastrarClienteScreen() {
         descricao: `CPF/CNPJ: ${cpfCnpj} | E-mail: ${email} | Tel: ${telefone} | Obs: ${observacoes}`,
       });
 
-      Alert.alert('Sucesso', 'Cadastro realizado com sucesso no banco!');
+      alertar('Sucesso', 'Cadastro realizado com sucesso no banco!');
       navigation.goBack();
     } catch (error: any) {
-      Alert.alert('Erro', error.message || 'Não foi possível conectar ao servidor.');
+      alertar('Erro', error.message || 'Não foi possível conectar ao servidor.');
     }
   };
 

@@ -8,7 +8,6 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  Alert,
   ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -17,6 +16,7 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { colors } from '../theme/colors';
 import { AuthStackParamList } from '../navigation/types';
 import { useAuth } from '../context/AuthContext';
+import { alertar } from '../utils/alerta';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'Cadastro'>;
 
@@ -34,15 +34,15 @@ export default function CadastroScreen({ navigation }: Props) {
   // Valida os dados e cria a conta na API
   async function handleCriarConta() {
     if (!nome || !email || !senha || !confirmarSenha) {
-      Alert.alert('Atenção', 'Preencha todos os campos.');
+      alertar('Atenção', 'Preencha todos os campos.');
       return;
     }
     if (senha !== confirmarSenha) {
-      Alert.alert('Atenção', 'As senhas não conferem.');
+      alertar('Atenção', 'As senhas não conferem.');
       return;
     }
     if (!aceitouTermos) {
-      Alert.alert('Atenção', 'É preciso aceitar os Termos de Uso.');
+      alertar('Atenção', 'É preciso aceitar os Termos de Uso.');
       return;
     }
     setCarregando(true);
@@ -50,7 +50,7 @@ export default function CadastroScreen({ navigation }: Props) {
       await cadastrar(nome, email, senha);
       // Cadastro bem-sucedido já faz login automático e entra no app.
     } catch (e: any) {
-      Alert.alert('Erro ao criar conta', e.message);
+      alertar('Erro ao criar conta', e.message);
     } finally {
       setCarregando(false);
     }

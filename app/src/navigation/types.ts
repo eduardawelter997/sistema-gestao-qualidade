@@ -13,4 +13,12 @@ export type AppTabParamList = {
   Mais: undefined;
   NovaOp: undefined;
   CadastrarCliente: undefined;
+  OpDetalhe: { opId: number };
+  NovoRegistroOp: {
+    opId: number;
+    opCodigo: string;
+    opTitulo: string;
+    opProduto?: string;
+    registroId?: number;
+  };
 };

@@ -3,21 +3,19 @@
  * com botão de sair (logout) à direita.
  */
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { colors } from '../theme/colors';
 import { useAuth } from '../context/AuthContext';
+import { confirmar } from '../utils/alerta';
 
 export default function Header() {
   const { sair } = useAuth();
 
   function confirmarSaida() {
-    Alert.alert('Sair', 'Deseja realmente sair do aplicativo?', [
-      { text: 'Cancelar', style: 'cancel' },
-      { text: 'Sair', style: 'destructive', onPress: () => sair() },
-    ]);
+    confirmar('Sair', 'Deseja realmente sair do aplicativo?', () => sair(), 'Sair');
   }
 
   return (
