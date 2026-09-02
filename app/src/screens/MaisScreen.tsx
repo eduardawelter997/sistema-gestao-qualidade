@@ -9,13 +9,13 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 import Header from '../components/Header';
 import { colors } from '../theme/colors';
 import { useAuth } from '../context/AuthContext';
+import { alertar, confirmar } from '../utils/alerta';
 
 // Gera as iniciais a partir do nome (ex.: "Carlos Silva" -> "CS")
 function iniciais(nome: string) {
@@ -47,13 +47,10 @@ export default function MaisScreen() {
   const { usuario, sair } = useAuth();
 
   const emBreve = () =>
-    Alert.alert('Em breve', 'Esta tela será desenvolvida nas próximas etapas.');
+    alertar('Em breve', 'Esta tela será desenvolvida nas próximas etapas.');
 
   function confirmarSaida() {
-    Alert.alert('Sair', 'Deseja realmente sair do aplicativo?', [
-      { text: 'Cancelar', style: 'cancel' },
-      { text: 'Sair', style: 'destructive', onPress: () => sair() },
-    ]);
+    confirmar('Sair', 'Deseja realmente sair do aplicativo?', () => sair(), 'Sair');
   }
 
   return (

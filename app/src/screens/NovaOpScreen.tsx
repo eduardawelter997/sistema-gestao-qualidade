@@ -6,12 +6,19 @@ import {
   ScrollView,
   TextInput,
   TouchableOpacity,
-  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { colors } from '../theme/colors';
-import { listarRegistros, criarRegistro } from '../services/api';
+import { listarRegistros, criarRegistro, listarUsuarios, UsuarioResumo } from '../services/api';
+import { alertar } from '../utils/alerta';
+
+function dataDeHoje() {
+  const hoje = new Date();
+  const dia = String(hoje.getDate()).padStart(2, '0');
+  const mes = String(hoje.getMonth() + 1).padStart(2, '0');
+  return `${dia}/${mes}/${hoje.getFullYear()}`;
+}
 
 export default function NovaOpScreen() {
   const navigation = useNavigation<any>();
@@ -22,7 +29,9 @@ export default function NovaOpScreen() {
   const [mostrarListaClientes, setMostrarListaClientes] = useState(false);
 
   const [responsavel, setResponsavel] = useState('');
-  const [dataAbertura, setDataAbertura] = useState('');
+  const [usuarios, setUsuarios] = useState<UsuarioResumo[]>([]);
+  const [mostrarListaResponsaveis, setMostrarListaResponsaveis] = useState(false);
+  const [dataAbertura, setDataAbertura] = useState(dataDeHoje());
   const [produto, setProduto] = useState('');
   const [numeroOp, setNumeroOp] = useState('');
   
@@ -38,14 +47,24 @@ export default function NovaOpScreen() {
 
   useEffect(() => {
     carregarClientes();
+    carregarUsuarios();
   }, []);
 
   const carregarClientes = async () => {
     try {
-      const { registros } = await listarRegistros('op');
+      const { registros } = await listarRegistros('cliente');
       setClientesLista(registros);
     } catch (error) {
       console.log('Erro ao carregar do banco:', error);
+    }
+  };
+
+  const carregarUsuarios = async () => {
+    try {
+      const { usuarios } = await listarUsuarios();
+      setUsuarios(usuarios);
+    } catch (error) {
+      console.log('Erro ao carregar usuários:', error);
     }
   };
 
@@ -62,22 +81,29 @@ export default function NovaOpScreen() {
 
   const handleSalvarOp = async () => {
     if (!numeroOp || !cliente || !responsavel || !tipoProcesso) {
-      Alert.alert('Atenção', 'Por favor, preencha os campos obrigatórios (Cliente, Responsável, Número da OP e Tipo de processo).');
+      alertar('Atenção', 'Por favor, preencha os campos obrigatórios (Cliente, Responsável, Número da OP e Tipo de processo).');
       return;
     }
 
     try {
+      const ano = new Date().getFullYear();
+      const codigo = `OP-${ano}-${numeroOp.padStart(5, '0')}`;
+
       await criarRegistro({
         tipo: 'op',
-        titulo: `OP #${numeroOp} - ${cliente}`,
-        descricao: `Responsável: ${responsavel} | Produto: ${produto} | Processo: ${tipoProcesso} | Data: ${dataAbertura}`,
+        codigo,
+        titulo: cliente,
         status: situacao,
+        responsavel,
+        produto,
+        processo: tipoProcesso,
+        data: dataAbertura || undefined,
       });
 
-      Alert.alert('Sucesso', 'Ordem de produção salva com sucesso no banco!');
+      alertar('Sucesso', 'Ordem de produção salva com sucesso no banco!');
       navigation.goBack();
     } catch (error: any) {
-      Alert.alert('Erro', error.message || 'Não foi possível conectar ao servidor.');
+      alertar('Erro', error.message || 'Não foi possível conectar ao servidor.');
     }
   };
 
@@ -137,16 +163,31 @@ export default function NovaOpScreen() {
 
         {/* Responsável */}
         <Text style={styles.label}>Responsável</Text>
-        <View style={styles.inputSeletor}>
-          <TextInput
-            placeholder="Selecione o responsável"
-            placeholderTextColor={colors.textSecondary}
-            value={responsavel}
-            onChangeText={setResponsavel}
-            style={styles.inputTextoSimples}
-          />
+        <TouchableOpacity
+          style={styles.inputSeletor}
+          onPress={() => setMostrarListaResponsaveis(!mostrarListaResponsaveis)}
+        >
+          <Text style={[styles.inputTextoSimples, !responsavel && { color: colors.textSecondary }]}>
+            {responsavel || 'Selecione o responsável'}
+          </Text>
           <Ionicons name="chevron-down" size={20} color={colors.textSecondary} />
-        </View>
+        </TouchableOpacity>
+        {mostrarListaResponsaveis && (
+          <View style={styles.dropdownContainer}>
+            {usuarios.map((u) => (
+              <TouchableOpacity
+                key={u.id}
+                style={styles.dropdownItem}
+                onPress={() => {
+                  setResponsavel(u.nome);
+                  setMostrarListaResponsaveis(false);
+                }}
+              >
+                <Text style={styles.dropdownItemText}>{u.nome}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
 
         {/* Data de Abertura */}
         <Text style={styles.label}>Data de abertura</Text>
@@ -305,6 +346,7 @@ const styles = StyleSheet.create({
   },
   inputTextoSimples: {
     flex: 1,
+    minWidth: 0,
     fontSize: 14,
     color: colors.textPrimary,
   },

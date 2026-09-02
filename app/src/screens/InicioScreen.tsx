@@ -13,13 +13,29 @@ import {
   ActivityIndicator,
   RefreshControl,
 } from 'react-native';
-import { useFocusEffect } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { Ionicons } from '@expo/vector-icons';
 
 import Header from '../components/Header';
 import StatusBadge from '../components/StatusBadge';
 import { colors } from '../theme/colors';
+import { useAuth } from '../context/AuthContext';
 import { buscarDashboard, DashboardResposta } from '../services/api';
-import { useNavigation } from '@react-navigation/native';
+import { alertar } from '../utils/alerta';
+
+const rotuloTipo: Record<string, string> = {
+  op: 'Ordem de Produção',
+  ocorrencia: 'Ocorrência',
+  acao: 'Ação Corretiva',
+  recebimento: 'Recebimento',
+};
+
+const iconeTipo: Record<string, keyof typeof Ionicons.glyphMap> = {
+  op: 'document-text',
+  ocorrencia: 'warning',
+  acao: 'construct',
+  recebimento: 'cube',
+};
 
 // Cartão de número da "Visão geral"
 function CartaoIndicador({
@@ -33,16 +49,39 @@ function CartaoIndicador({
 }) {
   return (
     <View style={styles.indicador}>
-      <Text style={styles.indicadorTitulo}>{titulo}</Text>
       <Text style={[styles.indicadorValor, { color: cor }]}>{valor}</Text>
+      <Text style={styles.indicadorTitulo}>{titulo}</Text>
     </View>
   );
 }
 
-// Botão de ação rápida
-function BotaoAcao({ texto, onPress }: { texto: string; onPress?: () => void }) {
+// Gera as iniciais a partir do nome (ex.: "Carlos Silva" -> "CS")
+function iniciais(nome: string) {
+  const partes = nome.trim().split(' ');
+  const primeira = partes[0]?.[0] ?? '';
+  const ultima = partes.length > 1 ? partes[partes.length - 1][0] : '';
+  return (primeira + ultima).toUpperCase();
+}
+
+// Botão de ação rápida (ícone + rótulo)
+function BotaoAcao({
+  icone,
+  texto,
+  cor,
+  fundo,
+  onPress,
+}: {
+  icone: keyof typeof Ionicons.glyphMap;
+  texto: string;
+  cor: string;
+  fundo: string;
+  onPress?: () => void;
+}) {
   return (
     <TouchableOpacity style={styles.acaoRapida} activeOpacity={0.7} onPress={onPress}>
+      <View style={[styles.acaoRapidaIcone, { backgroundColor: fundo }]}>
+        <Ionicons name={icone} size={16} color={cor} />
+      </View>
       <Text style={styles.acaoRapidaTexto}>{texto}</Text>
     </TouchableOpacity>
   );
@@ -50,6 +89,7 @@ function BotaoAcao({ texto, onPress }: { texto: string; onPress?: () => void }) 
 
 export default function InicioScreen() {
   const navigation = useNavigation<any>();
+  const { usuario } = useAuth();
   const [dados, setDados] = useState<DashboardResposta | null>(null);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
@@ -73,6 +113,9 @@ export default function InicioScreen() {
     }, [carregar])
   );
 
+  const emBreve = () =>
+    alertar('Em breve', 'Esta tela será desenvolvida nas próximas etapas.');
+
   return (
     <View style={styles.container}>
       <Header />
@@ -82,6 +125,21 @@ export default function InicioScreen() {
           <RefreshControl refreshing={carregando} onRefresh={carregar} />
         }
       >
+        {/* Boas-vindas */}
+        <View style={styles.boasVindas}>
+          <View style={styles.avatar}>
+            <Text style={styles.avatarTexto}>
+              {usuario ? iniciais(usuario.nome) : '?'}
+            </Text>
+          </View>
+          <View>
+            <Text style={styles.boasVindasSaudacao}>Bem-vindo,</Text>
+            <Text style={styles.boasVindasNome}>
+              {usuario?.nome} — {usuario?.cargo}
+            </Text>
+          </View>
+        </View>
+
         <Text style={styles.tituloSecao}>Visão geral</Text>
         <Text style={styles.subtitulo}>
           Acompanhe os principais registros da qualidade
@@ -126,36 +184,71 @@ export default function InicioScreen() {
             {/* Ações rápidas */}
             <Text style={styles.tituloSecao}>Ações rápidas</Text>
             <View style={styles.grid}>
-              <BotaoAcao 
-                texto="+ Nova OP" 
-                onPress={() => navigation.navigate('NovaOp')} 
+              <BotaoAcao
+                icone="document-text"
+                texto="Nova OP"
+                cor={colors.primary}
+                fundo="#DCEBF7"
+                onPress={() => navigation.navigate('NovaOp')}
               />
-              <BotaoAcao texto="+ Nova ocorrência" />
+              <BotaoAcao
+                icone="warning"
+                texto="Nova ocorrência"
+                cor="#C53030"
+                fundo="#FBD5D5"
+                onPress={emBreve}
+              />
             </View>
             <View style={styles.grid}>
-              <BotaoAcao texto="+ Novo recebimento" />
-              <BotaoAcao texto="+ Nova ação corretiva" />
+              <BotaoAcao
+                icone="cube"
+                texto="Novo recebimento"
+                cor="#1F9D57"
+                fundo="#D7F5DD"
+                onPress={emBreve}
+              />
+              <BotaoAcao
+                icone="construct"
+                texto="Nova ação corretiva"
+                cor="#9A6700"
+                fundo="#FDECC8"
+                onPress={emBreve}
+              />
             </View>
 
             {/* Registros recentes */}
             <Text style={styles.tituloSecao}>Registros recentes</Text>
-            {dados.recentes.map((r) => (
-              <View key={r.id} style={styles.recente}>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.recenteTipo}>
-                    {r.tipo === 'op'
-                      ? 'Ordem de Produção'
-                      : r.tipo === 'ocorrencia'
-                      ? 'Ocorrência'
-                      : r.tipo === 'acao'
-                      ? 'Ação Corretiva'
-                      : 'Recebimento'}
-                  </Text>
-                  <Text style={styles.recenteCodigo}>{r.codigo}</Text>
-                </View>
-                <StatusBadge status={r.status} />
-              </View>
-            ))}
+            {dados.recentes.map((r) => {
+              const tocavel = r.tipo === 'op';
+              return (
+                <TouchableOpacity
+                  key={r.id}
+                  style={styles.recente}
+                  activeOpacity={tocavel ? 0.7 : 1}
+                  disabled={!tocavel}
+                  onPress={() => navigation.navigate('OpDetalhe', { opId: r.id })}
+                >
+                  <Ionicons
+                    name={iconeTipo[r.tipo]}
+                    size={20}
+                    color={colors.textSecondary}
+                    style={styles.recenteIcone}
+                  />
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.recenteTitulo} numberOfLines={1}>
+                      {r.titulo || rotuloTipo[r.tipo]}
+                    </Text>
+                    <Text style={styles.recenteCodigo}>
+                      {r.codigo} · {r.data}
+                    </Text>
+                  </View>
+                  <StatusBadge status={r.status} />
+                  {tocavel && (
+                    <Ionicons name="chevron-forward" size={16} color={colors.textSecondary} />
+                  )}
+                </TouchableOpacity>
+              );
+            })}
           </>
         ) : null}
       </ScrollView>
@@ -166,6 +259,35 @@ export default function InicioScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.screenBg },
   conteudo: { padding: 16, paddingBottom: 32 },
+  boasVindas: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  avatar: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  avatarTexto: {
+    color: colors.white,
+    fontWeight: '700',
+    fontSize: 16,
+  },
+  boasVindasSaudacao: {
+    fontSize: 13,
+    color: colors.textSecondary,
+  },
+  boasVindasNome: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: colors.textPrimary,
+    marginTop: 2,
+  },
   tituloSecao: {
     fontSize: 18,
     fontWeight: '700',
@@ -187,37 +309,49 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.cardBg,
     borderRadius: 10,
-    padding: 14,
+    paddingVertical: 12,
+    paddingHorizontal: 12,
     borderWidth: 1,
     borderColor: colors.border,
+    alignItems: 'center',
   },
   indicadorTitulo: {
-    fontSize: 13,
+    fontSize: 12,
     color: colors.textSecondary,
-    marginBottom: 8,
+    marginTop: 2,
+    textAlign: 'center',
   },
   indicadorValor: {
-    fontSize: 28,
-    fontWeight: '800',
+    fontSize: 20,
+    fontWeight: '700',
+    textAlign: 'center',
   },
   acaoRapida: {
     flex: 1,
     backgroundColor: colors.cardBg,
     borderRadius: 10,
-    paddingVertical: 16,
+    paddingVertical: 14,
     alignItems: 'center',
     borderWidth: 1,
     borderColor: colors.border,
   },
+  acaoRapidaIcone: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 6,
+  },
   acaoRapidaTexto: {
-    color: colors.primary,
-    fontWeight: '700',
-    fontSize: 13,
+    fontSize: 12,
+    color: colors.textSecondary,
+    textAlign: 'center',
   },
   recente: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    gap: 10,
     backgroundColor: colors.cardBg,
     borderRadius: 10,
     padding: 14,
@@ -225,7 +359,10 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
   },
-  recenteTipo: {
+  recenteIcone: {
+    marginTop: 2,
+  },
+  recenteTitulo: {
     fontSize: 14,
     fontWeight: '700',
     color: colors.textPrimary,

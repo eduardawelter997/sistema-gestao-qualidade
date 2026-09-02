@@ -30,7 +30,7 @@ function init() {
 
     CREATE TABLE IF NOT EXISTS registros (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
-      tipo TEXT NOT NULL,          -- op | ocorrencia | acao | recebimento
+      tipo TEXT NOT NULL,          -- op | ocorrencia | acao | recebimento | ...
       codigo TEXT NOT NULL,        -- ex: OP-2026-00125
       titulo TEXT NOT NULL,        -- ex: "Cliente", "Fornecedor Alfa"
       descricao TEXT,              -- item/descrição resumida
@@ -40,7 +40,32 @@ function init() {
       criado_por INTEGER,
       criado_em TEXT DEFAULT (datetime('now'))
     );
+
+    CREATE TABLE IF NOT EXISTS anexos (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      registro_id INTEGER NOT NULL,
+      nome_arquivo TEXT NOT NULL,
+      caminho TEXT NOT NULL,
+      criado_em TEXT DEFAULT (datetime('now')),
+      FOREIGN KEY (registro_id) REFERENCES registros(id)
+    );
   `);
+
+  // Colunas adicionadas depois da criação inicial da tabela (bancos já
+  // existentes não ganham colunas novas via CREATE TABLE IF NOT EXISTS).
+  const colunasNovas = [
+    'ALTER TABLE registros ADD COLUMN op_id INTEGER',
+    'ALTER TABLE registros ADD COLUMN responsavel TEXT',
+    'ALTER TABLE registros ADD COLUMN produto TEXT',
+    'ALTER TABLE registros ADD COLUMN processo TEXT',
+  ];
+  for (const sql of colunasNovas) {
+    try {
+      db.exec(sql);
+    } catch (e) {
+      // Coluna já existe — ignora.
+    }
+  }
 }
 
 module.exports = { db, init };

@@ -14,12 +14,15 @@ import FavoritosScreen from '../screens/FavoritosScreen';
 import MaisScreen from '../screens/MaisScreen';
 import NovaOpScreen from '../screens/NovaOpScreen';
 import CadastrarClienteScreen from '../screens/CadastrarClienteScreen';
+import OpDetalheScreen from '../screens/OpDetalheScreen';
+import NovoRegistroOpScreen from '../screens/NovoRegistroOpScreen';
 
 const Tab = createBottomTabNavigator<AppTabParamList>();
 
 export default function AppTabs() {
   return (
     <Tab.Navigator
+      backBehavior="history"
       screenOptions={({ route }) => ({
         headerShown: false,
         tabBarActiveTintColor: colors.primary,
@@ -34,6 +37,8 @@ export default function AppTabs() {
             Mais: 'ellipsis-horizontal',
             NovaOp: 'add-circle',
             CadastrarCliente: 'person-add',
+            OpDetalhe: 'document-text',
+            NovoRegistroOp: 'add-circle-outline',
           };
           return <Ionicons name={nomes[route.name]} size={size} color={color} />;
         },
@@ -47,13 +52,23 @@ export default function AppTabs() {
         headerShown: false 
         }} 
       />
-      <Tab.Screen 
-        name="CadastrarCliente" 
-        component={CadastrarClienteScreen} 
-        options={{ 
-        tabBarButton: () => null, 
-        headerShown: false 
-        }} 
+      <Tab.Screen
+        name="CadastrarCliente"
+        component={CadastrarClienteScreen}
+        options={{
+        tabBarButton: () => null,
+        headerShown: false
+        }}
+      />
+      <Tab.Screen
+        name="OpDetalhe"
+        component={OpDetalheScreen}
+        options={{ tabBarButton: () => null, headerShown: false }}
+      />
+      <Tab.Screen
+        name="NovoRegistroOp"
+        component={NovoRegistroOpScreen}
+        options={{ tabBarButton: () => null, headerShown: false }}
       />
       <Tab.Screen
         name="Inicio"

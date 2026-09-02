@@ -5,6 +5,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
 
 import { colors } from '../theme/colors';
 import StatusBadge from './StatusBadge';
@@ -24,15 +25,25 @@ interface Props {
 }
 
 export default function RegistroCard({ registro, aoAlternarFavorito }: Props) {
+  const navigation = useNavigation<any>();
+  const tocavel = registro.tipo === 'op';
+
   return (
-    <View style={styles.card}>
+    <TouchableOpacity
+      style={styles.card}
+      activeOpacity={tocavel ? 0.7 : 1}
+      disabled={!tocavel}
+      onPress={() => navigation.navigate('OpDetalhe', { opId: registro.id })}
+    >
       <View style={styles.topo}>
-        <Text style={styles.tipo}>{rotuloTipo[registro.tipo]}</Text>
+        <Text style={styles.codigo}>{registro.codigo}</Text>
         <StatusBadge status={registro.status} />
       </View>
 
       <View style={styles.linhaTitulo}>
-        <Text style={styles.titulo}>{registro.titulo}</Text>
+        <Text style={styles.titulo} numberOfLines={1}>
+          {registro.titulo}
+        </Text>
         {aoAlternarFavorito && (
           <TouchableOpacity
             onPress={() => aoAlternarFavorito(registro.id)}
@@ -45,14 +56,18 @@ export default function RegistroCard({ registro, aoAlternarFavorito }: Props) {
             />
           </TouchableOpacity>
         )}
+        {tocavel && (
+          <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
+        )}
       </View>
 
-      <Text style={styles.codigo}>{registro.codigo}</Text>
-      {!!registro.descricao && (
-        <Text style={styles.descricao}>{registro.descricao}</Text>
-      )}
-      <Text style={styles.data}>Data: {registro.data}</Text>
-    </View>
+      <Text style={styles.subtitulo} numberOfLines={1}>
+        {rotuloTipo[registro.tipo]}
+        {!!registro.descricao && ` · ${registro.descricao}`}
+      </Text>
+
+      <Text style={styles.data}>{registro.data}</Text>
+    </TouchableOpacity>
   );
 }
 
@@ -69,9 +84,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 6,
+    marginBottom: 4,
   },
-  tipo: {
+  codigo: {
     color: colors.primary,
     fontWeight: '700',
     fontSize: 13,
@@ -80,6 +95,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    gap: 8,
   },
   titulo: {
     fontSize: 15,
@@ -87,12 +103,7 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
     flex: 1,
   },
-  codigo: {
-    fontSize: 13,
-    color: colors.textSecondary,
-    marginTop: 2,
-  },
-  descricao: {
+  subtitulo: {
     fontSize: 13,
     color: colors.textSecondary,
     marginTop: 2,
@@ -101,6 +112,5 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: colors.textSecondary,
     marginTop: 8,
-    textAlign: 'right',
   },
 });
