@@ -16,6 +16,7 @@ import Header from '../components/Header';
 import { colors } from '../theme/colors';
 import { useAuth } from '../context/AuthContext';
 import { alertar, confirmar } from '../utils/alerta';
+import { useNavigation } from '@react-navigation/native';
 
 // Gera as iniciais a partir do nome (ex.: "Carlos Silva" -> "CS")
 function iniciais(nome: string) {
@@ -44,6 +45,7 @@ function ItemMenu({
 }
 
 export default function MaisScreen() {
+  const navigation = useNavigation<any>();
   const { usuario, sair } = useAuth();
 
   const emBreve = () =>
@@ -60,7 +62,7 @@ export default function MaisScreen() {
         <Text style={styles.tituloMais}>Mais</Text>
 
         {/* Cartão de perfil */}
-        <TouchableOpacity style={styles.perfil} onPress={emBreve} activeOpacity={0.7}>
+        <TouchableOpacity style={styles.perfil} onPress={() => navigation.navigate('Perfil')} activeOpacity={0.7}>
           <View style={styles.avatar}>
             <Text style={styles.avatarTexto}>
               {usuario ? iniciais(usuario.nome) : '?'}
@@ -76,7 +78,7 @@ export default function MaisScreen() {
         {/* Gestão */}
         <Text style={styles.secao}>Gestão</Text>
         <View style={styles.grupo}>
-          <ItemMenu texto="Gestão de funcionários" onPress={emBreve} />
+          <ItemMenu texto="Gestão de funcionários" onPress={() => navigation.navigate('GestaoFuncionarios')} />
           <ItemMenu texto="Indicadores gerenciais" onPress={emBreve} />
           <ItemMenu texto="Cliente e fornecedores" onPress={emBreve} />
         </View>

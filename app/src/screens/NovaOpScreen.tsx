@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback  } from 'react';
 import {
   View,
   Text,
@@ -8,10 +8,12 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { colors } from '../theme/colors';
 import { listarRegistros, criarRegistro, listarUsuarios, UsuarioResumo } from '../services/api';
 import { alertar } from '../utils/alerta';
+
+
 
 function dataDeHoje() {
   const hoje = new Date();
@@ -45,15 +47,21 @@ export default function NovaOpScreen() {
   const [mostrarListaSituacao, setMostrarListaSituacao] = useState(false);
   const situacoesOp = ['Aberta', 'Em andamento', 'Concluído'];
 
-  useEffect(() => {
-    carregarClientes();
-    carregarUsuarios();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      carregarClientes();
+      carregarUsuarios();
+    }, [])
+  );
 
   const carregarClientes = async () => {
     try {
-      const { registros } = await listarRegistros('cliente');
-      setClientesLista(registros);
+      const resposta = await listarRegistros('cliente');
+      console.log('Resposta completa da API de clientes:', resposta); // 👈 Vamos inspecionar isso no terminal
+      
+      // Se a API retornar um array direto ou a chave for diferente:
+      const lista = resposta.registros || resposta.dados || resposta;
+      setClientesLista(Array.isArray(lista) ? lista : []);
     } catch (error) {
       console.log('Erro ao carregar do banco:', error);
     }
