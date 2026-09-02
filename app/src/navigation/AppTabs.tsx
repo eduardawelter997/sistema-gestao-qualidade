@@ -16,6 +16,12 @@ import NovaOpScreen from '../screens/NovaOpScreen';
 import CadastrarClienteScreen from '../screens/CadastrarClienteScreen';
 import OpDetalheScreen from '../screens/OpDetalheScreen';
 import NovoRegistroOpScreen from '../screens/NovoRegistroOpScreen';
+import GestaoFuncionariosScreen from '../screens/GestaoFuncionariosScreen';
+import ConvidarFuncionarioScreen from '../screens/ConvidarFuncionarioScreen';
+import DetalhesFuncionarioScreen from '../screens/DetalhesFuncionarioScreen';
+import PerfilScreen from '../screens/PerfilScreen';
+import AlterarSenhaScreen from '../screens/AlterarSenhaScreen';
+
 
 const Tab = createBottomTabNavigator<AppTabParamList>();
 
@@ -29,7 +35,6 @@ export default function AppTabs() {
         tabBarInactiveTintColor: colors.textSecondary,
         tabBarStyle: { height: 60, paddingBottom: 8, paddingTop: 6 },
         tabBarIcon: ({ color, size }) => {
-          // Escolhe o ícone conforme a aba
           const nomes: Record<keyof AppTabParamList, keyof typeof Ionicons.glyphMap> = {
             Inicio: 'home',
             Busca: 'search',
@@ -39,16 +44,29 @@ export default function AppTabs() {
             CadastrarCliente: 'person-add',
             OpDetalhe: 'document-text',
             NovoRegistroOp: 'add-circle-outline',
+            GestaoFuncionarios: 'people',
+            ConvidarFuncionario: 'person-add-outline',
+            
           };
           return <Ionicons name={nomes[route.name]} size={size} color={color} />;
         },
       })}
     >
+      <Tab.Screen
+        name="Inicio"
+        component={InicioScreen}
+        options={{ title: 'Início' }}
+      />
+      
+      <Tab.Screen name="Busca" component={BuscaScreen} />
+      <Tab.Screen name="Favoritos" component={FavoritosScreen} />
+      <Tab.Screen name="Mais" component={MaisScreen} />
+
       <Tab.Screen 
         name="NovaOp" 
         component={NovaOpScreen} 
         options={{ 
-        tabBarButton: () => null, // 👈 Esconde da barra de navegação inferior
+        tabBarButton: () => null, 
         headerShown: false 
         }} 
       />
@@ -70,14 +88,39 @@ export default function AppTabs() {
         component={NovoRegistroOpScreen}
         options={{ tabBarButton: () => null, headerShown: false }}
       />
-      <Tab.Screen
-        name="Inicio"
-        component={InicioScreen}
-        options={{ title: 'Início' }}
+
+      <Tab.Screen 
+        name="GestaoFuncionarios" 
+        component={GestaoFuncionariosScreen} 
+        options={{ 
+        tabBarButton: () => null, 
+        headerShown: false 
+        }} 
       />
-      <Tab.Screen name="Busca" component={BuscaScreen} />
-      <Tab.Screen name="Favoritos" component={FavoritosScreen} />
-      <Tab.Screen name="Mais" component={MaisScreen} />
+
+      <Tab.Screen 
+        name="ConvidarFuncionario" 
+        component={ConvidarFuncionarioScreen} 
+        options={{ tabBarButton: () => null, headerShown: false }} 
+      />
+
+      <Tab.Screen 
+        name="DetalhesFuncionario" 
+        component={DetalhesFuncionarioScreen} 
+        options={{ tabBarButton: () => null, headerShown: false }} 
+      />
+
+      <Tab.Screen 
+        name="Perfil" 
+        component={PerfilScreen} 
+        options={{ tabBarButton: () => null, headerShown: false}} 
+      />
+
+      <Tab.Screen 
+        name="AlterarSenha" 
+        component={AlterarSenhaScreen} 
+        options={{ tabBarButton: () => null, headerShown: false}} 
+      />
     </Tab.Navigator>
   );
 }
