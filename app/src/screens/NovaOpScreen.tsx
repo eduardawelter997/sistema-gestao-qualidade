@@ -124,7 +124,7 @@ export default function NovaOpScreen() {
       <ScrollView contentContainerStyle={styles.formulario}>
         
         {/* Cliente */}
-        <Text style={styles.label}>Cliente</Text>
+        <Text style={styles.label}>Cliente <Text style={styles.obrigatorio}>*</Text></Text>
         <View style={styles.inputSeletor}>
           <TextInput
             placeholder="Digite ou selecione o cliente"
@@ -166,7 +166,7 @@ export default function NovaOpScreen() {
         </TouchableOpacity>
 
         {/* Responsável */}
-        <Text style={styles.label}>Responsável</Text>
+        <Text style={styles.label}>Responsável <Text style={styles.obrigatorio}>*</Text></Text>
         <TouchableOpacity
           style={styles.inputSeletor}
           onPress={() => setMostrarListaResponsaveis(!mostrarListaResponsaveis)}
@@ -219,7 +219,7 @@ export default function NovaOpScreen() {
         />
 
         {/* Número da OP */}
-        <Text style={styles.label}>Número da OP</Text>
+        <Text style={styles.label}>Número da OP <Text style={styles.obrigatorio}>*</Text></Text>
         <TextInput
           placeholder="Informe o número da OP"
           placeholderTextColor={colors.textSecondary}
@@ -234,7 +234,7 @@ export default function NovaOpScreen() {
           
           {/* Tipo de Processo */}
           <View style={styles.colunaMetade}>
-            <Text style={styles.label}>Tipo de processo</Text>
+            <Text style={styles.label}>Tipo de processo <Text style={styles.obrigatorio}>*</Text></Text>
             <TouchableOpacity 
               style={styles.inputSeletor} 
               onPress={() => setMostrarListaProcesso(!mostrarListaProcesso)}
@@ -329,6 +329,9 @@ const styles = StyleSheet.create({
   formulario: {
     padding: 16,
     paddingBottom: 40,
+  },
+  obrigatorio: {
+    color: colors.danger,
   },
   label: {
     fontSize: 14,

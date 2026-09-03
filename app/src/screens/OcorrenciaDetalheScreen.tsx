@@ -2,14 +2,13 @@
  * Tela de Detalhe da Ocorrência (não conformidade).
  * Mostra os dados registrados e a ação corretiva vinculada, se existir.
  */
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Image,
   ActivityIndicator,
 } from 'react-native';
 import {
@@ -19,10 +18,8 @@ import {
   RouteProp,
 } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
-import * as ImagePicker from 'expo-image-picker';
 
 import { colors } from '../theme/colors';
-import { API_URL } from '../config/api';
 import StatusBadge from '../components/StatusBadge';
 import { AppTabParamList } from '../navigation/types';
 import {
@@ -31,35 +28,9 @@ import {
   buscarRegistro,
   listarRegistros,
   listarAnexos,
-  enviarAnexo,
   alternarFavorito,
 } from '../services/api';
 import { alertar } from '../utils/alerta';
-
-async function escolherFoto() {
-  const resultado = await ImagePicker.launchImageLibraryAsync({
-    mediaTypes: ImagePicker.MediaTypeOptions.Images,
-    quality: 0.7,
-  });
-  if (resultado.canceled || !resultado.assets?.[0]) return null;
-  const asset = resultado.assets[0];
-  return {
-    uri: asset.uri,
-    name: asset.fileName || `foto-${Date.now()}.jpg`,
-    type: asset.mimeType || 'image/jpeg',
-  };
-}
-
-function LinhaFotos({ anexos }: { anexos: Anexo[] }) {
-  if (!anexos.length) return null;
-  return (
-    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.fotosLinha}>
-      {anexos.map((a) => (
-        <Image key={a.id} source={{ uri: `${API_URL}${a.url}` }} style={styles.foto} />
-      ))}
-    </ScrollView>
-  );
-}
 
 export default function OcorrenciaDetalheScreen() {
   const navigation = useNavigation<any>();
@@ -117,18 +88,6 @@ export default function OcorrenciaDetalheScreen() {
       await alternarFavorito(ocorrencia.id);
     } catch {
       carregar();
-    }
-  }
-
-  async function onAdicionarFoto() {
-    const foto = await escolherFoto();
-    if (!foto) return;
-    try {
-      await enviarAnexo(ocorrenciaId, foto);
-      const { anexos: novos } = await listarAnexos(ocorrenciaId);
-      setAnexos(novos);
-    } catch (e: any) {
-      alertar('Erro', e.message);
     }
   }
 
@@ -200,16 +159,19 @@ export default function OcorrenciaDetalheScreen() {
         </View>
 
         {/* Fotos e evidências */}
-        <Text style={styles.tituloSecao}>Fotos e evidências</Text>
-        <TouchableOpacity style={styles.botaoSecundario} onPress={onAdicionarFoto}>
-          <Ionicons name="camera-outline" size={16} color={colors.primary} />
-          <Text style={styles.botaoSecundarioTexto}> Adicionar foto</Text>
+        <TouchableOpacity
+          style={styles.botaoSecundario}
+          onPress={() =>
+            navigation.navigate('FotosAnexos', {
+              registroId: ocorrencia.id,
+              registroCodigo: ocorrencia.codigo,
+              registroTipo: 'ocorrencia',
+            })
+          }
+        >
+          <Ionicons name="images-outline" size={16} color={colors.primary} />
+          <Text style={styles.botaoSecundarioTexto}> Ver anexos ({anexos.length})</Text>
         </TouchableOpacity>
-        {anexos.length === 0 ? (
-          <Text style={styles.vazio}>Nenhuma evidência anexada ainda.</Text>
-        ) : (
-          <LinhaFotos anexos={anexos} />
-        )}
 
         {/* Ação corretiva */}
         <Text style={styles.tituloSecao}>Ação corretiva</Text>
@@ -312,14 +274,6 @@ const styles = StyleSheet.create({
     color: colors.primary,
     fontWeight: '600',
     fontSize: 13,
-  },
-  fotosLinha: { marginTop: 4 },
-  foto: {
-    width: 72,
-    height: 72,
-    borderRadius: 8,
-    marginRight: 8,
-    backgroundColor: colors.border,
   },
   tituloSecao: {
     fontSize: 18,

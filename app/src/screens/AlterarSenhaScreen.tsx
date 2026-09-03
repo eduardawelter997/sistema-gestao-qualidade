@@ -97,7 +97,7 @@ export default function AlterarSenhaScreen() {
           </View>
         ) : null}
 
-        <Text style={styles.label}>Senha atual:</Text>
+        <Text style={styles.label}>Senha atual: <Text style={styles.obrigatorio}>*</Text></Text>
         <TextInput
           style={styles.input}
           secureTextEntry
@@ -107,7 +107,7 @@ export default function AlterarSenhaScreen() {
           placeholderTextColor={colors.textSecondary}
         />
 
-        <Text style={styles.label}>Nova senha:</Text>
+        <Text style={styles.label}>Nova senha: <Text style={styles.obrigatorio}>*</Text></Text>
         <TextInput
           style={styles.input}
           secureTextEntry
@@ -117,7 +117,7 @@ export default function AlterarSenhaScreen() {
           placeholderTextColor={colors.textSecondary}
         />
 
-        <Text style={styles.label}>Confirmar nova senha:</Text>
+        <Text style={styles.label}>Confirmar nova senha: <Text style={styles.obrigatorio}>*</Text></Text>
         <TextInput
           style={styles.input}
           secureTextEntry
@@ -162,6 +162,7 @@ const styles = StyleSheet.create({
   },
   textoErro: { color: '#A94442', fontSize: 13, fontWeight: '600', flex: 1 },
   label: { fontSize: 13, fontWeight: '600', color: colors.textPrimary, marginBottom: 6, marginTop: 12 },
+  obrigatorio: { color: colors.danger },
   input: { backgroundColor: '#FFF', borderRadius: 8, borderWidth: 1, borderColor: colors.border, paddingHorizontal: 12, height: 48, fontSize: 14, color: colors.textPrimary },
   botaoSalvar: { backgroundColor: colors.primary, borderRadius: 8, alignItems: 'center', paddingVertical: 14, marginTop: 24 },
   botaoSalvarTexto: { color: '#FFF', fontSize: 15, fontWeight: '700' },

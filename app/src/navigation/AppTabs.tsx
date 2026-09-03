@@ -27,6 +27,7 @@ import NovaAcaoCorretivaScreen from '../screens/NovaAcaoCorretivaScreen';
 import AcaoDetalheScreen from '../screens/AcaoDetalheScreen';
 import NovoRecebimentoScreen from '../screens/NovoRecebimentoScreen';
 import RecebimentoDetalheScreen from '../screens/RecebimentoDetalheScreen';
+import FotosAnexosScreen from '../screens/FotosAnexosScreen';
 
 
 const Tab = createBottomTabNavigator<AppTabParamList>();
@@ -61,6 +62,7 @@ export default function AppTabs() {
             AcaoDetalhe: 'construct-outline',
             NovoRecebimento: 'cube',
             RecebimentoDetalhe: 'cube-outline',
+            FotosAnexos: 'images',
           };
           return <Ionicons name={nomes[route.name]} size={size} color={color} />;
         },
@@ -164,6 +166,11 @@ export default function AppTabs() {
       <Tab.Screen
         name="RecebimentoDetalhe"
         component={RecebimentoDetalheScreen}
+        options={{ tabBarButton: () => null, headerShown: false }}
+      />
+      <Tab.Screen
+        name="FotosAnexos"
+        component={FotosAnexosScreen}
         options={{ tabBarButton: () => null, headerShown: false }}
       />
     </Tab.Navigator>

@@ -165,7 +165,7 @@ export default function CadastrarClienteScreen() {
         </View>
 
         {/* Nome / Razão social */}
-        <Text style={styles.label}>Nome/Razão social:</Text>
+        <Text style={styles.label}>Nome/Razão social: <Text style={styles.obrigatorio}>*</Text></Text>
         <TextInput
           placeholder="Digite o nome ou razão social"
           placeholderTextColor={colors.textSecondary}
@@ -175,7 +175,7 @@ export default function CadastrarClienteScreen() {
         />
 
         {/* CPF / CNPJ */}
-        <Text style={styles.label}>CPF/CNPJ:</Text>
+        <Text style={styles.label}>CPF/CNPJ: <Text style={styles.obrigatorio}>*</Text></Text>
         <TextInput
           placeholder="Digite o CPF ou CNPJ"
           placeholderTextColor={colors.textSecondary}
@@ -283,6 +283,9 @@ const styles = StyleSheet.create({
   formulario: {
     padding: 16,
     paddingBottom: 40,
+  },
+  obrigatorio: {
+    color: colors.danger,
   },
   label: {
     fontSize: 14,

@@ -112,7 +112,7 @@ export default function ConvidarFuncionarioScreen() {
         </View>
 
         {/* Nome Completo */}
-        <Text style={styles.label}>Nome completo:</Text>
+        <Text style={styles.label}>Nome completo: <Text style={styles.obrigatorio}>*</Text></Text>
         <TextInput
           placeholder="Digite o nome completo"
           placeholderTextColor={colors.textSecondary}
@@ -122,7 +122,7 @@ export default function ConvidarFuncionarioScreen() {
         />
 
         {/* E-mail corporativo */}
-        <Text style={styles.label}>E-mail corporativo (Login):</Text>
+        <Text style={styles.label}>E-mail corporativo (Login): <Text style={styles.obrigatorio}>*</Text></Text>
         <TextInput
           placeholder="Digite o e-mail de acesso"
           placeholderTextColor={colors.textSecondary}
@@ -134,7 +134,7 @@ export default function ConvidarFuncionarioScreen() {
         />
 
         {/* Senha Inicial */}
-        <Text style={styles.label}>Senha inicial:</Text>
+        <Text style={styles.label}>Senha inicial: <Text style={styles.obrigatorio}>*</Text></Text>
         <TextInput
           placeholder="Digite a senha temporária de acesso"
           placeholderTextColor={colors.textSecondary}
@@ -145,7 +145,7 @@ export default function ConvidarFuncionarioScreen() {
         />
 
         {/* Perfil de acesso */}
-        <Text style={styles.label}>Perfil de acesso:</Text>
+        <Text style={styles.label}>Perfil de acesso: <Text style={styles.obrigatorio}>*</Text></Text>
         <TouchableOpacity 
           style={styles.inputSeletor} 
           onPress={() => setMostrarListaPerfil(!mostrarListaPerfil)}
@@ -174,7 +174,7 @@ export default function ConvidarFuncionarioScreen() {
         )}
 
         {/* Setor */}
-        <Text style={styles.label}>Setor:</Text>
+        <Text style={styles.label}>Setor: <Text style={styles.obrigatorio}>*</Text></Text>
         <TouchableOpacity 
           style={styles.inputSeletor} 
           onPress={() => setMostrarListaSetor(!mostrarListaSetor)}
@@ -258,6 +258,9 @@ const styles = StyleSheet.create({
   subtituloTela: {
     fontSize: 12,
     color: colors.textSecondary,
+  },
+  obrigatorio: {
+    color: colors.danger,
   },
   label: {
     fontSize: 14,

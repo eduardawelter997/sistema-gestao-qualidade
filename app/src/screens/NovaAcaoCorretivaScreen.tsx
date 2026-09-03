@@ -175,7 +175,7 @@ export default function NovaAcaoCorretivaScreen() {
 
       <ScrollView contentContainerStyle={styles.formulario}>
         {/* Origem */}
-        <Text style={styles.label}>Origem da ação corretiva (obrigatória)</Text>
+        <Text style={styles.label}>Origem da ação corretiva <Text style={styles.obrigatorio}>*</Text></Text>
         <TouchableOpacity
           style={styles.inputSeletor}
           onPress={() => setMostrarOrigens(!mostrarOrigens)}
@@ -320,66 +320,61 @@ export default function NovaAcaoCorretivaScreen() {
           </View>
         )}
 
-        {/* Responsável e Setor responsável lado a lado */}
-        <View style={styles.linhaDupla}>
-          <View style={styles.colunaMetade}>
-            <Text style={styles.label}>Responsável</Text>
-            <TouchableOpacity
-              style={styles.inputSeletor}
-              onPress={() => setMostrarResponsaveis(!mostrarResponsaveis)}
-            >
-              <Text style={[styles.inputTextoSimples, !responsavel && { color: colors.textSecondary }]}>
-                {responsavel || 'Selecione'}
-              </Text>
-              <Ionicons name="chevron-down" size={18} color={colors.textSecondary} />
-            </TouchableOpacity>
-            {mostrarResponsaveis && (
-              <View style={styles.dropdownContainer}>
-                {usuarios.map((u) => (
-                  <TouchableOpacity
-                    key={u.id}
-                    style={styles.dropdownItem}
-                    onPress={() => {
-                      setResponsavel(u.nome);
-                      setMostrarResponsaveis(false);
-                    }}
-                  >
-                    <Text style={styles.dropdownItemText}>{u.nome}</Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            )}
+        {/* Responsável */}
+        <Text style={styles.label}>Responsável</Text>
+        <TouchableOpacity
+          style={styles.inputSeletor}
+          onPress={() => setMostrarResponsaveis(!mostrarResponsaveis)}
+        >
+          <Text style={[styles.inputTextoSimples, !responsavel && { color: colors.textSecondary }]}>
+            {responsavel || 'Selecione'}
+          </Text>
+          <Ionicons name="chevron-down" size={18} color={colors.textSecondary} />
+        </TouchableOpacity>
+        {mostrarResponsaveis && (
+          <View style={styles.dropdownContainer}>
+            {usuarios.map((u) => (
+              <TouchableOpacity
+                key={u.id}
+                style={styles.dropdownItem}
+                onPress={() => {
+                  setResponsavel(u.nome);
+                  setMostrarResponsaveis(false);
+                }}
+              >
+                <Text style={styles.dropdownItemText}>{u.nome}</Text>
+              </TouchableOpacity>
+            ))}
           </View>
+        )}
 
-          <View style={styles.colunaMetade}>
-            <Text style={styles.label}>Setor responsável</Text>
-            <TouchableOpacity
-              style={styles.inputSeletor}
-              onPress={() => setMostrarSetores(!mostrarSetores)}
-            >
-              <Text style={[styles.inputTextoSimples, !setorResponsavel && { color: colors.textSecondary }]}>
-                {setorResponsavel || 'Selecione o setor'}
-              </Text>
-              <Ionicons name="chevron-down" size={18} color={colors.textSecondary} />
-            </TouchableOpacity>
-            {mostrarSetores && (
-              <View style={styles.dropdownContainer}>
-                {SETORES.map((s) => (
-                  <TouchableOpacity
-                    key={s}
-                    style={styles.dropdownItem}
-                    onPress={() => {
-                      setSetorResponsavel(s);
-                      setMostrarSetores(false);
-                    }}
-                  >
-                    <Text style={styles.dropdownItemText}>{s}</Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            )}
+        {/* Setor responsável */}
+        <Text style={styles.label}>Setor responsável</Text>
+        <TouchableOpacity
+          style={styles.inputSeletor}
+          onPress={() => setMostrarSetores(!mostrarSetores)}
+        >
+          <Text style={[styles.inputTextoSimples, !setorResponsavel && { color: colors.textSecondary }]}>
+            {setorResponsavel || 'Selecione o setor'}
+          </Text>
+          <Ionicons name="chevron-down" size={18} color={colors.textSecondary} />
+        </TouchableOpacity>
+        {mostrarSetores && (
+          <View style={styles.dropdownContainer}>
+            {SETORES.map((s) => (
+              <TouchableOpacity
+                key={s}
+                style={styles.dropdownItem}
+                onPress={() => {
+                  setSetorResponsavel(s);
+                  setMostrarSetores(false);
+                }}
+              >
+                <Text style={styles.dropdownItemText}>{s}</Text>
+              </TouchableOpacity>
+            ))}
           </View>
-        </View>
+        )}
 
         {/* Prazo */}
         <Text style={styles.label}>Prazo</Text>
@@ -454,6 +449,9 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   formulario: { padding: 16, paddingBottom: 40 },
+  obrigatorio: {
+    color: colors.danger,
+  },
   label: {
     fontSize: 14,
     fontWeight: '600',

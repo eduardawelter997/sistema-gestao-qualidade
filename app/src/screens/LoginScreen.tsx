@@ -59,7 +59,7 @@ export default function LoginScreen({ navigation }: Props) {
           <Text style={styles.title}>Sistema de Gestão da Qualidade</Text>
 
           {/* Campo de e-mail */}
-          <Text style={styles.label}>E-mail</Text>
+          <Text style={styles.label}>E-mail <Text style={styles.obrigatorio}>*</Text></Text>
           <TextInput
             style={styles.input}
             placeholder="Digite seu e-mail"
@@ -72,7 +72,7 @@ export default function LoginScreen({ navigation }: Props) {
           />
 
           {/* Campo de senha */}
-          <Text style={styles.label}>Senha</Text>
+          <Text style={styles.label}>Senha <Text style={styles.obrigatorio}>*</Text></Text>
           <TextInput
             style={styles.input}
             placeholder="Digite sua senha"
@@ -142,6 +142,9 @@ const styles = StyleSheet.create({
     color: colors.textOnBlue,
     textAlign: 'center',
     marginBottom: 32,
+  },
+  obrigatorio: {
+    color: colors.danger,
   },
   label: {
     fontSize: 18,
