@@ -131,25 +131,39 @@ router.patch('/registros/:id', (req, res) => {
   res.json({ sucesso: true });
 });
 
+const PREFIXOS_CODIGO = { op: 'OP', ocorrencia: 'OC', acao: 'AC', recebimento: 'REC' };
+
 router.post('/registros', (req, res) => {
-  const { tipo, titulo, descricao, status, codigo, responsavel, produto, processo, opId, data } = req.body;
+  const {
+    tipo, titulo, descricao, status, codigo, responsavel, produto, processo, opId, data,
+    lote, quantidade, disposicao, origem, metodoAnalise, analiseCausa,
+    opRelacionadaId, ocorrenciaRelacionadaId, clienteFornecedorId,
+    notaFiscal, comProblema,
+  } = req.body;
 
   if (!titulo) {
     return res.status(400).json({ erro: 'O título/nome é obrigatório.' });
   }
 
   try {
-    const codigoGerado = codigo || `REG-${Date.now().toString().slice(-6)}`;
+    const tipoFinal = tipo || 'op';
+    const prefixo = PREFIXOS_CODIGO[tipoFinal] || 'REG';
+    const codigoGerado =
+      codigo || `${prefixo}-${new Date().getFullYear()}-${Date.now().toString().slice(-6)}`;
     const statusInicial = status || 'Em andamento';
     const dataAtual = data || new Date().toISOString().split('T')[0];
 
     const stmt = db.prepare(
-      `INSERT INTO registros (codigo, tipo, titulo, descricao, status, data, responsavel, produto, processo, op_id)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      `INSERT INTO registros (
+        codigo, tipo, titulo, descricao, status, data, responsavel, produto, processo, op_id,
+        lote, quantidade, disposicao, origem, metodo_analise, analise_causa,
+        op_relacionada_id, ocorrencia_relacionada_id, cliente_fornecedor_id,
+        nota_fiscal, com_problema
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
     );
     const resultado = stmt.run(
       codigoGerado,
-      tipo || 'op',
+      tipoFinal,
       titulo,
       descricao || '',
       statusInicial,
@@ -157,7 +171,18 @@ router.post('/registros', (req, res) => {
       responsavel || null,
       produto || null,
       processo || null,
-      opId || null
+      opId || null,
+      lote || null,
+      quantidade || null,
+      disposicao || null,
+      origem || null,
+      metodoAnalise || null,
+      analiseCausa || null,
+      opRelacionadaId || null,
+      ocorrenciaRelacionadaId || null,
+      clienteFornecedorId || null,
+      notaFiscal || null,
+      comProblema ? 1 : 0
     );
 
     res.status(201).json({ id: resultado.lastInsertRowid, sucesso: true });

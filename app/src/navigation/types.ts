@@ -27,4 +27,16 @@ export type AppTabParamList = {
   DetalhesFuncionario: { funcionario: any };
   Perfil: undefined;
   AlterarSenha: undefined;
+  NovaOcorrencia: {
+    tipoPreSelecionado?: string;
+    opRelacionadaId?: number;
+    opRelacionadaCodigo?: string;
+    clienteFornecedorId?: number;
+    clienteFornecedorLabel?: string;
+  } | undefined;
+  OcorrenciaDetalhe: { ocorrenciaId: number };
+  NovaAcaoCorretiva: { ocorrenciaId?: number; ocorrenciaCodigo?: string };
+  AcaoDetalhe: { acaoId: number };
+  NovoRecebimento: undefined;
+  RecebimentoDetalhe: { recebimentoId: number };
 };

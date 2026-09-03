@@ -22,6 +22,7 @@ import { colors } from '../theme/colors';
 import { useAuth } from '../context/AuthContext';
 import { buscarDashboard, DashboardResposta } from '../services/api';
 import { alertar } from '../utils/alerta';
+import { abrirDetalhe, temTelaDeDetalhe } from '../navigation/navegarDetalhe';
 
 const rotuloTipo: Record<string, string> = {
   op: 'Ordem de Produção',
@@ -196,7 +197,7 @@ export default function InicioScreen() {
                 texto="Nova ocorrência"
                 cor="#C53030"
                 fundo="#FBD5D5"
-                onPress={emBreve}
+                onPress={() => navigation.navigate('NovaOcorrencia')}
               />
             </View>
             <View style={styles.grid}>
@@ -205,28 +206,28 @@ export default function InicioScreen() {
                 texto="Novo recebimento"
                 cor="#1F9D57"
                 fundo="#D7F5DD"
-                onPress={emBreve}
+                onPress={() => navigation.navigate('NovoRecebimento')}
               />
               <BotaoAcao
                 icone="construct"
                 texto="Nova ação corretiva"
                 cor="#9A6700"
                 fundo="#FDECC8"
-                onPress={emBreve}
+                onPress={() => navigation.navigate('NovaAcaoCorretiva', {})}
               />
             </View>
 
             {/* Registros recentes */}
             <Text style={styles.tituloSecao}>Registros recentes</Text>
             {dados.recentes.map((r) => {
-              const tocavel = r.tipo === 'op';
+              const tocavel = temTelaDeDetalhe(r.tipo);
               return (
                 <TouchableOpacity
                   key={r.id}
                   style={styles.recente}
                   activeOpacity={tocavel ? 0.7 : 1}
                   disabled={!tocavel}
-                  onPress={() => navigation.navigate('OpDetalhe', { opId: r.id })}
+                  onPress={() => abrirDetalhe(navigation, r)}
                 >
                   <Ionicons
                     name={iconeTipo[r.tipo]}
