@@ -10,9 +10,10 @@ import { useNavigation } from '@react-navigation/native';
 import { colors } from '../theme/colors';
 import StatusBadge from './StatusBadge';
 import { Registro } from '../services/api';
+import { abrirDetalhe, temTelaDeDetalhe } from '../navigation/navegarDetalhe';
 
 // Rótulo amigável para cada tipo de registro
-const rotuloTipo: Record<Registro['tipo'], string> = {
+const rotuloTipo: Record<string, string> = {
   op: 'Ordem de Produção',
   ocorrencia: 'Ocorrência',
   acao: 'Ação Corretiva',
@@ -26,14 +27,14 @@ interface Props {
 
 export default function RegistroCard({ registro, aoAlternarFavorito }: Props) {
   const navigation = useNavigation<any>();
-  const tocavel = registro.tipo === 'op';
+  const tocavel = temTelaDeDetalhe(registro.tipo);
 
   return (
     <TouchableOpacity
       style={styles.card}
       activeOpacity={tocavel ? 0.7 : 1}
       disabled={!tocavel}
-      onPress={() => navigation.navigate('OpDetalhe', { opId: registro.id })}
+      onPress={() => abrirDetalhe(navigation, registro)}
     >
       <View style={styles.topo}>
         <Text style={styles.codigo}>{registro.codigo}</Text>

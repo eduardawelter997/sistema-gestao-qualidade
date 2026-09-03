@@ -21,6 +21,12 @@ import ConvidarFuncionarioScreen from '../screens/ConvidarFuncionarioScreen';
 import DetalhesFuncionarioScreen from '../screens/DetalhesFuncionarioScreen';
 import PerfilScreen from '../screens/PerfilScreen';
 import AlterarSenhaScreen from '../screens/AlterarSenhaScreen';
+import NovaOcorrenciaScreen from '../screens/NovaOcorrenciaScreen';
+import OcorrenciaDetalheScreen from '../screens/OcorrenciaDetalheScreen';
+import NovaAcaoCorretivaScreen from '../screens/NovaAcaoCorretivaScreen';
+import AcaoDetalheScreen from '../screens/AcaoDetalheScreen';
+import NovoRecebimentoScreen from '../screens/NovoRecebimentoScreen';
+import RecebimentoDetalheScreen from '../screens/RecebimentoDetalheScreen';
 
 
 const Tab = createBottomTabNavigator<AppTabParamList>();
@@ -49,6 +55,12 @@ export default function AppTabs() {
             DetalhesFuncionario: 'person-circle-outline',
             Perfil: 'person-circle',
             AlterarSenha: 'lock-closed-outline',
+            NovaOcorrencia: 'warning',
+            OcorrenciaDetalhe: 'warning-outline',
+            NovaAcaoCorretiva: 'construct',
+            AcaoDetalhe: 'construct-outline',
+            NovoRecebimento: 'cube',
+            RecebimentoDetalhe: 'cube-outline',
           };
           return <Ionicons name={nomes[route.name]} size={size} color={color} />;
         },
@@ -118,10 +130,41 @@ export default function AppTabs() {
         options={{ tabBarButton: () => null, headerShown: false}} 
       />
 
-      <Tab.Screen 
-        name="AlterarSenha" 
-        component={AlterarSenhaScreen} 
-        options={{ tabBarButton: () => null, headerShown: false}} 
+      <Tab.Screen
+        name="AlterarSenha"
+        component={AlterarSenhaScreen}
+        options={{ tabBarButton: () => null, headerShown: false}}
+      />
+
+      <Tab.Screen
+        name="NovaOcorrencia"
+        component={NovaOcorrenciaScreen}
+        options={{ tabBarButton: () => null, headerShown: false }}
+      />
+      <Tab.Screen
+        name="OcorrenciaDetalhe"
+        component={OcorrenciaDetalheScreen}
+        options={{ tabBarButton: () => null, headerShown: false }}
+      />
+      <Tab.Screen
+        name="NovaAcaoCorretiva"
+        component={NovaAcaoCorretivaScreen}
+        options={{ tabBarButton: () => null, headerShown: false }}
+      />
+      <Tab.Screen
+        name="AcaoDetalhe"
+        component={AcaoDetalheScreen}
+        options={{ tabBarButton: () => null, headerShown: false }}
+      />
+      <Tab.Screen
+        name="NovoRecebimento"
+        component={NovoRecebimentoScreen}
+        options={{ tabBarButton: () => null, headerShown: false }}
+      />
+      <Tab.Screen
+        name="RecebimentoDetalhe"
+        component={RecebimentoDetalheScreen}
+        options={{ tabBarButton: () => null, headerShown: false }}
       />
     </Tab.Navigator>
   );

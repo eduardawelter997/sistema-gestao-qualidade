@@ -58,6 +58,21 @@ function init() {
     'ALTER TABLE registros ADD COLUMN responsavel TEXT',
     'ALTER TABLE registros ADD COLUMN produto TEXT',
     'ALTER TABLE registros ADD COLUMN processo TEXT',
+    // Não conformidade (Produto Não Conforme)
+    'ALTER TABLE registros ADD COLUMN lote TEXT',
+    'ALTER TABLE registros ADD COLUMN quantidade TEXT',
+    'ALTER TABLE registros ADD COLUMN disposicao TEXT',
+    // Ação corretiva
+    'ALTER TABLE registros ADD COLUMN origem TEXT',
+    'ALTER TABLE registros ADD COLUMN metodo_analise TEXT',
+    'ALTER TABLE registros ADD COLUMN analise_causa TEXT',
+    // Vínculos opcionais entre registros (guardam o id, não texto solto)
+    'ALTER TABLE registros ADD COLUMN op_relacionada_id INTEGER',
+    'ALTER TABLE registros ADD COLUMN ocorrencia_relacionada_id INTEGER',
+    'ALTER TABLE registros ADD COLUMN cliente_fornecedor_id INTEGER',
+    // Recebimento
+    'ALTER TABLE registros ADD COLUMN nota_fiscal TEXT',
+    'ALTER TABLE registros ADD COLUMN com_problema INTEGER DEFAULT 0',
   ];
   for (const sql of colunasNovas) {
     try {

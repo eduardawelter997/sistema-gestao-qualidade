@@ -36,6 +36,17 @@ export interface Registro {
   produto?: string | null;
   processo?: string | null;
   op_id?: number | null;
+  lote?: string | null;
+  quantidade?: string | null;
+  disposicao?: string | null;
+  origem?: string | null;
+  metodo_analise?: string | null;
+  analise_causa?: string | null;
+  op_relacionada_id?: number | null;
+  ocorrencia_relacionada_id?: number | null;
+  cliente_fornecedor_id?: number | null;
+  nota_fiscal?: string | null;
+  com_problema?: number | null;
 }
 
 export interface Anexo {
@@ -140,6 +151,17 @@ export function criarRegistro(dados: {
   processo?: string;
   opId?: number;
   data?: string;
+  lote?: string;
+  quantidade?: string;
+  disposicao?: string;
+  origem?: string;
+  metodoAnalise?: string;
+  analiseCausa?: string;
+  opRelacionadaId?: number;
+  ocorrenciaRelacionadaId?: number;
+  clienteFornecedorId?: number;
+  notaFiscal?: string;
+  comProblema?: boolean;
 }) {
   return request<{ id: number; sucesso: boolean }>('/api/registros', {
     method: 'POST',
@@ -176,6 +198,17 @@ export function buscarTimelineOp(id: number) {
 
 export function listarUsuarios() {
   return request<{ usuarios: UsuarioResumo[] }>('/api/usuarios');
+}
+
+// Clientes e fornecedores juntos, usado no dropdown "Cliente ou fornecedor"
+export async function listarClientesFornecedores() {
+  const [clientes, fornecedores] = await Promise.all([
+    listarRegistros('cliente'),
+    listarRegistros('fornecedor'),
+  ]);
+  return [...clientes.registros, ...fornecedores.registros].sort((a, b) =>
+    a.titulo.localeCompare(b.titulo)
+  );
 }
 
 export function listarAnexos(registroId: number) {
