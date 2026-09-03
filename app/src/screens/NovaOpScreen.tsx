@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback  } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -56,12 +56,8 @@ export default function NovaOpScreen() {
 
   const carregarClientes = async () => {
     try {
-      const resposta = await listarRegistros('cliente');
-      console.log('Resposta completa da API de clientes:', resposta); // 👈 Vamos inspecionar isso no terminal
-      
-      // Se a API retornar um array direto ou a chave for diferente:
-      const lista = resposta.registros || resposta.dados || resposta;
-      setClientesLista(Array.isArray(lista) ? lista : []);
+      const { registros } = await listarRegistros('cliente');
+      setClientesLista(registros);
     } catch (error) {
       console.log('Erro ao carregar do banco:', error);
     }

@@ -46,7 +46,9 @@ export default function AppTabs() {
             NovoRegistroOp: 'add-circle-outline',
             GestaoFuncionarios: 'people',
             ConvidarFuncionario: 'person-add-outline',
-            
+            DetalhesFuncionario: 'person-circle-outline',
+            Perfil: 'person-circle',
+            AlterarSenha: 'lock-closed-outline',
           };
           return <Ionicons name={nomes[route.name]} size={size} color={color} />;
         },
