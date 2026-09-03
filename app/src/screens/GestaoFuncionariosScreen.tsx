@@ -231,17 +231,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginTop: 4,
   },
-  statusBadge: {
-    backgroundColor: '#E6F4EA',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
-  },
-  statusTexto: {
-    color: '#137333',
-    fontSize: 11,
-    fontWeight: 'bold',
-  },
   direitaCard: {
     flexDirection: 'row',
     alignItems: 'center',

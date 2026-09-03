@@ -4,6 +4,7 @@
 export type AuthStackParamList = {
   Login: undefined;
   Cadastro: undefined;
+  AlterarSenha: undefined;
 };
 
 export type AppTabParamList = {
@@ -13,7 +14,6 @@ export type AppTabParamList = {
   Mais: undefined;
   NovaOp: undefined;
   CadastrarCliente: undefined;
-<<<<<<< Updated upstream
   OpDetalhe: { opId: number };
   NovoRegistroOp: {
     opId: number;
@@ -22,8 +22,9 @@ export type AppTabParamList = {
     opProduto?: string;
     registroId?: number;
   };
-=======
   GestaoFuncionarios: undefined;
   ConvidarFuncionario: undefined;
->>>>>>> Stashed changes
+  DetalhesFuncionario: { funcionario: any };
+  Perfil: undefined;
+  AlterarSenha: undefined;
 };
