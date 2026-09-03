@@ -184,7 +184,7 @@ export default function NovoRecebimentoScreen() {
         </View>
 
         {/* Cliente ou fornecedor */}
-        <Text style={styles.label}>Cliente ou fornecedor</Text>
+        <Text style={styles.label}>Cliente ou fornecedor <Text style={styles.obrigatorio}>*</Text></Text>
         <TouchableOpacity
           style={styles.inputSeletor}
           onPress={() => setMostrarClientesFornecedores(!mostrarClientesFornecedores)}
@@ -234,7 +234,7 @@ export default function NovoRecebimentoScreen() {
             />
           </View>
           <View style={styles.colunaMetade}>
-            <Text style={styles.label}>Material</Text>
+            <Text style={styles.label}>Material <Text style={styles.obrigatorio}>*</Text></Text>
             <TextInput
               placeholder="Informe o material"
               placeholderTextColor={colors.textSecondary}
@@ -390,6 +390,9 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   formulario: { padding: 16, paddingBottom: 40 },
+  obrigatorio: {
+    color: colors.danger,
+  },
   label: {
     fontSize: 14,
     fontWeight: '600',

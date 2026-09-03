@@ -123,7 +123,7 @@ export default function PerfilScreen() {
           <Text style={styles.textoResumo}>Perfil: <Text style={styles.textoResumoBold}>{perfil}</Text></Text>
         </View>
 
-        <Text style={styles.label}>Nome completo:</Text>
+        <Text style={styles.label}>Nome completo: <Text style={styles.obrigatorio}>*</Text></Text>
         <TextInput
           style={styles.input}
           value={nome}
@@ -131,7 +131,7 @@ export default function PerfilScreen() {
           placeholderTextColor={colors.textSecondary}
         />
 
-        <Text style={styles.label}>E-mail:</Text>
+        <Text style={styles.label}>E-mail: <Text style={styles.obrigatorio}>*</Text></Text>
         <TextInput
           style={styles.input}
           value={email}
@@ -207,6 +207,7 @@ const styles = StyleSheet.create({
   textoResumo: { fontSize: 13, color: colors.textSecondary, marginBottom: 4 },
   textoResumoBold: { color: colors.textPrimary, fontWeight: '600' },
   label: { fontSize: 13, fontWeight: '600', color: colors.textPrimary, marginBottom: 6, marginTop: 8 },
+  obrigatorio: { color: colors.danger },
   input: { backgroundColor: '#FFF', borderRadius: 8, borderWidth: 1, borderColor: colors.border, paddingHorizontal: 12, height: 48, fontSize: 14, color: colors.textPrimary, justifyContent: 'center' },
   inputDesabilitado: { backgroundColor: '#F9F9F9' },
   textoDesabilitado: { color: colors.textPrimary, fontSize: 14 },

@@ -20,7 +20,6 @@ import {
   RouteProp,
 } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
-import * as ImagePicker from 'expo-image-picker';
 
 import { colors } from '../theme/colors';
 import { API_URL } from '../config/api';
@@ -32,7 +31,6 @@ import {
   buscarRegistro,
   buscarTimelineOp,
   listarAnexos,
-  enviarAnexo,
   alternarFavorito,
 } from '../services/api';
 import { alertar } from '../utils/alerta';
@@ -54,20 +52,6 @@ const iconeTipoTimeline: Record<string, keyof typeof Ionicons.glyphMap> = {
   inspecao: 'document-text',
   inspecao_final: 'checkmark-done',
 };
-
-async function escolherFoto() {
-  const resultado = await ImagePicker.launchImageLibraryAsync({
-    mediaTypes: ImagePicker.MediaTypeOptions.Images,
-    quality: 0.7,
-  });
-  if (resultado.canceled || !resultado.assets?.[0]) return null;
-  const asset = resultado.assets[0];
-  return {
-    uri: asset.uri,
-    name: asset.fileName || `foto-${Date.now()}.jpg`,
-    type: asset.mimeType || 'image/jpeg',
-  };
-}
 
 function LinhaFotos({ anexos }: { anexos: Anexo[] }) {
   if (!anexos.length) return null;
@@ -137,18 +121,6 @@ export default function OpDetalheScreen() {
     }
   }
 
-  async function onAdicionarFoto() {
-    const foto = await escolherFoto();
-    if (!foto) return;
-    try {
-      await enviarAnexo(opId, foto);
-      const { anexos } = await listarAnexos(opId);
-      setAnexosOp(anexos);
-    } catch (e: any) {
-      alertar('Erro', e.message);
-    }
-  }
-
   if (carregando) {
     return (
       <View style={styles.container}>
@@ -195,12 +167,20 @@ export default function OpDetalheScreen() {
           )}
         </View>
 
-        {/* Foto da OP */}
-        <TouchableOpacity style={styles.botaoSecundario} onPress={onAdicionarFoto}>
-          <Ionicons name="camera-outline" size={16} color={colors.primary} />
-          <Text style={styles.botaoSecundarioTexto}> Adicionar foto</Text>
+        {/* Fotos e anexos */}
+        <TouchableOpacity
+          style={styles.botaoSecundario}
+          onPress={() =>
+            navigation.navigate('FotosAnexos', {
+              registroId: op.id,
+              registroCodigo: op.codigo,
+              registroTipo: 'op',
+            })
+          }
+        >
+          <Ionicons name="images-outline" size={16} color={colors.primary} />
+          <Text style={styles.botaoSecundarioTexto}> Ver anexos ({anexosOp.length})</Text>
         </TouchableOpacity>
-        <LinhaFotos anexos={anexosOp} />
 
         {/* Linha do tempo */}
         <Text style={styles.tituloSecao}>Linha do tempo</Text>

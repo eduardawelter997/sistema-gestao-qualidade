@@ -187,7 +187,7 @@ export default function NovaOcorrenciaScreen() {
 
       <ScrollView contentContainerStyle={styles.formulario}>
         {/* Tipo da ocorrência */}
-        <Text style={styles.label}>Tipo da ocorrência</Text>
+        <Text style={styles.label}>Tipo da ocorrência <Text style={styles.obrigatorio}>*</Text></Text>
         <TouchableOpacity
           style={styles.inputSeletor}
           onPress={() => setMostrarTipos(!mostrarTipos)}
@@ -361,7 +361,7 @@ export default function NovaOcorrenciaScreen() {
         </View>
 
         {/* Descrição */}
-        <Text style={styles.label}>Descrição</Text>
+        <Text style={styles.label}>Descrição <Text style={styles.obrigatorio}>*</Text></Text>
         <TextInput
           placeholder="Descreva a ocorrência"
           placeholderTextColor={colors.textSecondary}
@@ -408,6 +408,9 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   formulario: { padding: 16, paddingBottom: 40 },
+  obrigatorio: {
+    color: colors.danger,
+  },
   label: {
     fontSize: 14,
     fontWeight: '600',

@@ -2,10 +2,12 @@
  * Rotas dos registros da qualidade (OPs, ocorrências, ações, recebimentos)
  * e do dashboard. Alimentam as telas Início, Busca e Favoritos.
  */
+const fs = require('fs');
+const path = require('path');
 const express = require('express');
 const { db } = require('../db');
 const { autenticar } = require('../auth-middleware');
-const { upload } = require('../upload');
+const { upload, uploadsDir } = require('../upload');
 
 const router = express.Router();
 
@@ -93,9 +95,10 @@ router.patch('/registros/:id/favorito', (req, res) => {
 
 /**
  * PATCH /api/registros/:id
- * Edita um registro-filho da linha do tempo de uma OP. Só é permitido
- * enquanto o registro estiver "Em andamento" (uma vez concluído, vira
- * histórico e não deve mais ser alterado).
+ * Edita um registro existente (Ação Corretiva, ou um registro-filho da
+ * linha do tempo de uma OP). Registros-filho só podem ser editados
+ * enquanto estiverem "Em andamento" (uma vez concluídos, viram histórico);
+ * essa restrição não se aplica a registros de topo (op_id nulo).
  */
 router.patch('/registros/:id', (req, res) => {
   const { id } = req.params;
@@ -110,11 +113,19 @@ router.patch('/registros/:id', (req, res) => {
     });
   }
 
-  const { tipo, titulo, descricao, status, responsavel, produto, processo, data } = req.body;
+  const {
+    tipo, titulo, descricao, status, responsavel, produto, processo, data,
+    lote, quantidade, disposicao, origem, metodoAnalise, analiseCausa,
+    opRelacionadaId, ocorrenciaRelacionadaId, clienteFornecedorId,
+    notaFiscal, comProblema,
+  } = req.body;
 
   db.prepare(
-    `UPDATE registros
-     SET tipo = ?, titulo = ?, descricao = ?, status = ?, responsavel = ?, produto = ?, processo = ?, data = ?
+    `UPDATE registros SET
+      tipo = ?, titulo = ?, descricao = ?, status = ?, responsavel = ?, produto = ?, processo = ?, data = ?,
+      lote = ?, quantidade = ?, disposicao = ?, origem = ?, metodo_analise = ?, analise_causa = ?,
+      op_relacionada_id = ?, ocorrencia_relacionada_id = ?, cliente_fornecedor_id = ?,
+      nota_fiscal = ?, com_problema = ?
      WHERE id = ?`
   ).run(
     tipo ?? existente.tipo,
@@ -125,6 +136,17 @@ router.patch('/registros/:id', (req, res) => {
     produto ?? existente.produto,
     processo ?? existente.processo,
     data ?? existente.data,
+    lote ?? existente.lote,
+    quantidade ?? existente.quantidade,
+    disposicao ?? existente.disposicao,
+    origem ?? existente.origem,
+    metodoAnalise ?? existente.metodo_analise,
+    analiseCausa ?? existente.analise_causa,
+    opRelacionadaId !== undefined ? opRelacionadaId : existente.op_relacionada_id,
+    ocorrenciaRelacionadaId !== undefined ? ocorrenciaRelacionadaId : existente.ocorrencia_relacionada_id,
+    clienteFornecedorId !== undefined ? clienteFornecedorId : existente.cliente_fornecedor_id,
+    notaFiscal ?? existente.nota_fiscal,
+    comProblema !== undefined ? (comProblema ? 1 : 0) : existente.com_problema,
     id
   );
 
@@ -246,12 +268,17 @@ router.post('/registros/:id/anexos', (req, res) => {
     }
 
     const info = db
-      .prepare('INSERT INTO anexos (registro_id, nome_arquivo, caminho) VALUES (?, ?, ?)')
-      .run(id, req.file.originalname, req.file.filename);
+      .prepare(
+        `INSERT INTO anexos (registro_id, nome_arquivo, caminho, tamanho, tipo_mime)
+         VALUES (?, ?, ?, ?, ?)`
+      )
+      .run(id, req.file.originalname, req.file.filename, req.file.size, req.file.mimetype);
 
     res.status(201).json({
       id: info.lastInsertRowid,
       nome_arquivo: req.file.originalname,
+      tamanho: req.file.size,
+      tipo_mime: req.file.mimetype,
       url: `/uploads/${req.file.filename}`,
     });
   });
@@ -269,6 +296,25 @@ router.get('/registros/:id/anexos', (req, res) => {
   res.json({
     anexos: anexos.map((a) => ({ ...a, url: `/uploads/${a.caminho}` })),
   });
+});
+
+/**
+ * DELETE /api/anexos/:id
+ * Remove um anexo (registro no banco + arquivo em disco).
+ */
+router.delete('/anexos/:id', (req, res) => {
+  const anexo = db.prepare('SELECT * FROM anexos WHERE id = ?').get(req.params.id);
+  if (!anexo) {
+    return res.status(404).json({ erro: 'Anexo não encontrado.' });
+  }
+
+  db.prepare('DELETE FROM anexos WHERE id = ?').run(req.params.id);
+
+  fs.unlink(path.join(uploadsDir, anexo.caminho), () => {
+    // Ignora erro caso o arquivo já não exista em disco.
+  });
+
+  res.json({ sucesso: true });
 });
 
 module.exports = router;

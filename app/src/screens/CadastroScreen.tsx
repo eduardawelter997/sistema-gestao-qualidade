@@ -77,7 +77,7 @@ export default function CadastroScreen({ navigation }: Props) {
           <Text style={styles.title}>Criar conta</Text>
 
           {/* Nome completo */}
-          <Text style={styles.label}>Nome completo:</Text>
+          <Text style={styles.label}>Nome completo: <Text style={styles.obrigatorio}>*</Text></Text>
           <TextInput
             style={styles.input}
             placeholder="Digite seu nome completo"
@@ -87,7 +87,7 @@ export default function CadastroScreen({ navigation }: Props) {
           />
 
           {/* E-mail */}
-          <Text style={styles.label}>E-mail:</Text>
+          <Text style={styles.label}>E-mail: <Text style={styles.obrigatorio}>*</Text></Text>
           <TextInput
             style={styles.input}
             placeholder="Digite seu e-mail"
@@ -100,7 +100,7 @@ export default function CadastroScreen({ navigation }: Props) {
           />
 
           {/* Senha */}
-          <Text style={styles.label}>Senha:</Text>
+          <Text style={styles.label}>Senha: <Text style={styles.obrigatorio}>*</Text></Text>
           <TextInput
             style={styles.input}
             placeholder="Criar uma senha"
@@ -111,7 +111,7 @@ export default function CadastroScreen({ navigation }: Props) {
           />
 
           {/* Confirmar senha */}
-          <Text style={styles.label}>Confirmar senha</Text>
+          <Text style={styles.label}>Confirmar senha <Text style={styles.obrigatorio}>*</Text></Text>
           <TextInput
             style={styles.input}
             placeholder="Digite sua senha novamente"
@@ -194,6 +194,9 @@ const styles = StyleSheet.create({
     color: colors.textOnBlue,
     textAlign: 'center',
     marginBottom: 24,
+  },
+  obrigatorio: {
+    color: colors.danger,
   },
   label: {
     fontSize: 15,

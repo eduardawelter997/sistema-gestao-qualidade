@@ -47,6 +47,7 @@ export interface Registro {
   cliente_fornecedor_id?: number | null;
   nota_fiscal?: string | null;
   com_problema?: number | null;
+  avaliacao_eficacia?: string | null;
 }
 
 export interface Anexo {
@@ -54,6 +55,9 @@ export interface Anexo {
   registro_id: number;
   nome_arquivo: string;
   url: string;
+  tamanho?: number | null;
+  tipo_mime?: string | null;
+  criado_em?: string;
 }
 
 export interface UsuarioResumo {
@@ -184,6 +188,17 @@ export function atualizarRegistro(
     produto?: string;
     processo?: string;
     data?: string;
+    lote?: string;
+    quantidade?: string;
+    disposicao?: string;
+    origem?: string;
+    metodoAnalise?: string;
+    analiseCausa?: string;
+    opRelacionadaId?: number | null;
+    ocorrenciaRelacionadaId?: number | null;
+    clienteFornecedorId?: number | null;
+    notaFiscal?: string;
+    comProblema?: boolean;
   }
 ) {
   return request<{ sucesso: boolean }>(`/api/registros/${id}`, {
@@ -213,6 +228,10 @@ export async function listarClientesFornecedores() {
 
 export function listarAnexos(registroId: number) {
   return request<{ anexos: Anexo[] }>(`/api/registros/${registroId}/anexos`);
+}
+
+export function excluirAnexo(anexoId: number) {
+  return request<{ sucesso: boolean }>(`/api/anexos/${anexoId}`, { method: 'DELETE' });
 }
 
 // Upload de arquivo: não usa o helper request() porque o corpo é

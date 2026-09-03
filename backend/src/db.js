@@ -73,6 +73,11 @@ function init() {
     // Recebimento
     'ALTER TABLE registros ADD COLUMN nota_fiscal TEXT',
     'ALTER TABLE registros ADD COLUMN com_problema INTEGER DEFAULT 0',
+    // Acompanhamento da Ação Corretiva
+    "ALTER TABLE registros ADD COLUMN avaliacao_eficacia TEXT DEFAULT 'Aguardando avaliação'",
+    // Anexos: tamanho e tipo do arquivo (pra distinguir foto de PDF na galeria)
+    'ALTER TABLE anexos ADD COLUMN tamanho INTEGER',
+    'ALTER TABLE anexos ADD COLUMN tipo_mime TEXT',
   ];
   for (const sql of colunasNovas) {
     try {

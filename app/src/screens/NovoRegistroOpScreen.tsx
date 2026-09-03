@@ -192,7 +192,7 @@ export default function NovoRegistroOpScreen() {
         </View>
 
         {/* Tipo de registro */}
-        <Text style={styles.label}>Tipo de registro</Text>
+        <Text style={styles.label}>Tipo de registro <Text style={styles.obrigatorio}>*</Text></Text>
         <TouchableOpacity
           style={styles.inputSeletor}
           onPress={() => setMostrarTipos(!mostrarTipos)}
@@ -220,7 +220,7 @@ export default function NovoRegistroOpScreen() {
         )}
 
         {/* Responsável */}
-        <Text style={styles.label}>Responsável</Text>
+        <Text style={styles.label}>Responsável <Text style={styles.obrigatorio}>*</Text></Text>
         <TouchableOpacity
           style={styles.inputSeletor}
           onPress={() => setMostrarResponsaveis(!mostrarResponsaveis)}
@@ -380,6 +380,9 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: colors.textSecondary,
     marginTop: 2,
+  },
+  obrigatorio: {
+    color: colors.danger,
   },
   label: {
     fontSize: 14,

@@ -39,4 +39,5 @@ export type AppTabParamList = {
   AcaoDetalhe: { acaoId: number };
   NovoRecebimento: undefined;
   RecebimentoDetalhe: { recebimentoId: number };
+  FotosAnexos: { registroId: number; registroCodigo: string; registroTipo: string };
 };
