@@ -272,6 +272,19 @@ export async function enviarAnexo(
   return corpo as Anexo;
 }
 
+export interface IndicadoresResposta {
+  resumo: {
+    ocorrenciasAbertas: number;
+    acoesAtrasadas: number;
+    recebimentosProblemas: number;
+    tempoMedio: string;
+  };
+  grafico: {
+    valores: number[];
+    alturas: number[];
+  };
+}
+
 export function buscarIndicadores(
   inicio: string,
   fim: string,

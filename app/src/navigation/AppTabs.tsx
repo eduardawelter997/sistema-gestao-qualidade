@@ -67,6 +67,10 @@ export default function AppTabs() {
             NovoRecebimento: 'cube',
             RecebimentoDetalhe: 'cube-outline',
             FotosAnexos: 'images',
+            ClientesFornecedores: 'business-outline',
+            Sobre: 'information-circle-outline',
+            Ajuda: 'help-circle-outline',
+            Indicadores: 'stats-chart-outline',
           };
           return <Ionicons name={nomes[route.name]} size={size} color={color} />;
         },

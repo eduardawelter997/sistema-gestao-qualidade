@@ -40,4 +40,8 @@ export type AppTabParamList = {
   NovoRecebimento: undefined;
   RecebimentoDetalhe: { recebimentoId: number };
   FotosAnexos: { registroId: number; registroCodigo: string; registroTipo: string };
+  ClientesFornecedores: undefined;
+  Sobre: undefined;
+  Ajuda: undefined;
+  Indicadores: undefined;
 };
