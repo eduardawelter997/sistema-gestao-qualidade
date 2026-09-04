@@ -22,9 +22,9 @@ export type AppTabParamList = {
     opProduto?: string;
     registroId?: number;
   };
-  GestaoFuncionarios: undefined;
-  ConvidarFuncionario: undefined;
-  DetalhesFuncionario: { funcionario: any };
+  GestaoColaboradores: undefined;
+  ConvidarColaborador: undefined;
+  DetalhesColaborador: { colaborador: any };
   Perfil: undefined;
   AlterarSenha: undefined;
   NovaOcorrencia: {

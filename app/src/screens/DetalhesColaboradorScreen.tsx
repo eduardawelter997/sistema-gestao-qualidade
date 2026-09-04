@@ -11,25 +11,26 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { colors } from '../theme/colors';
+import { API_URL } from '../config/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-export default function DetalhesFuncionarioScreen() {
+export default function DetalhesColaboradorScreen() {
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
-  
-  // Recebe os dados do funcionário passados pela lista
-  const { funcionario } = route.params || {};
 
-  // Estado para controlar se o funcionário está ativo ou inativo na tela de detalhes
-  const [statusAtual, setStatusAtual] = useState(funcionario?.status || 'Ativo');
+  // Recebe os dados do colaborador passados pela lista
+  const { colaborador } = route.params || {};
+
+  // Estado para controlar se o colaborador está ativo ou inativo na tela de detalhes
+  const [statusAtual, setStatusAtual] = useState(colaborador?.status || 'Ativo');
   const isInativo = statusAtual === 'Inativo';
 
   // Estados dos seletores
-  const [perfil, setPerfil] = useState(funcionario?.perfil || 'Gestor');
+  const [perfil, setPerfil] = useState(colaborador?.perfil || 'Gestor');
   const [mostrarListaPerfil, setMostrarListaPerfil] = useState(false);
   const perfisDisponiveis = ['Gestor da Qualidade', 'Gestor', 'Almoxarife', 'Administrativo'];
 
-  const [setor, setSetor] = useState(funcionario?.setor || 'Desenvolvimento');
+  const [setor, setSetor] = useState(colaborador?.setor || 'Desenvolvimento');
   const [mostrarListaSetor, setMostrarListaSetor] = useState(false);
   const setoresDisponiveis = [
     'Produção',
@@ -57,8 +58,8 @@ export default function DetalhesFuncionarioScreen() {
     setPermissoes(prev => ({ ...prev, [chave]: !prev[chave] }));
   };
 
-  const iniciais = funcionario?.nome
-    ? funcionario.nome.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()
+  const iniciais = colaborador?.nome
+    ? colaborador.nome.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()
     : 'MS';
 
   const handleSalvar = () => {
@@ -67,13 +68,13 @@ export default function DetalhesFuncionarioScreen() {
   };
 
   const handleDesativar = async () => {
-    console.log('Iniciando desativação direta para o ID:', funcionario?.id);
+    console.log('Iniciando desativação direta para o ID:', colaborador?.id);
 
     try {
       const token = await AsyncStorage.getItem('@gestao_qualidade:token');
       console.log('Token recuperado:', token ? 'OK' : 'Vazio');
 
-      const url = `http://localhost:3000/api/auth/desativar-funcionario/${funcionario?.id}`;
+      const url = `${API_URL}/api/auth/desativar-colaborador/${colaborador?.id}`;
       console.log('Chamando URL:', url);
 
       const resposta = await fetch(url, {
@@ -87,10 +88,10 @@ export default function DetalhesFuncionarioScreen() {
       console.log('Resposta completa do servidor:', dados);
 
       if (resposta.ok) {
-        Alert.alert('Sucesso', 'Funcionário desativado com sucesso.');
+        Alert.alert('Sucesso', 'Colaborador desativado com sucesso.');
         navigation.goBack();
       } else {
-        Alert.alert('Erro', dados.erro || 'Não foi possível desativar o funcionário.');
+        Alert.alert('Erro', dados.erro || 'Não foi possível desativar o colaborador.');
       }
     } catch (error) {
       console.log('Erro de conexão catch:', error);
@@ -100,7 +101,7 @@ export default function DetalhesFuncionarioScreen() {
 
   const handleAlternarStatus = async () => {
     const novaAcao = isInativo ? 'ativar' : 'desativar';
-    const endpoint = `http://localhost:3000/api/auth/${novaAcao}-funcionario/${funcionario?.id}`;
+    const endpoint = `${API_URL}/api/auth/${novaAcao}-colaborador/${colaborador?.id}`;
 
     try {
       const token = await AsyncStorage.getItem('@gestao_qualidade:token');
@@ -130,8 +131,8 @@ export default function DetalhesFuncionarioScreen() {
   const salvarAlteracaoPerfilSetor = async (novoPerfil: string, novoSetor: string) => {
     try {
       const token = await AsyncStorage.getItem('@gestao_qualidade:token');
-      
-      await fetch(`http://localhost:3000/api/auth/atualizar-perfil-setor/${funcionario?.id}`, {
+
+      await fetch(`${API_URL}/api/auth/atualizar-perfil-setor/${colaborador?.id}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -140,9 +141,9 @@ export default function DetalhesFuncionarioScreen() {
         body: JSON.stringify({ perfil: novoPerfil, setor: novoSetor }),
       });
 
-      if (funcionario) {
-        funcionario.perfil = novoPerfil;
-        funcionario.setor = novoSetor;
+      if (colaborador) {
+        colaborador.perfil = novoPerfil;
+        colaborador.setor = novoSetor;
       }
     } catch (error) {
       console.log('Erro ao salvar alteração:', error);
@@ -160,25 +161,25 @@ export default function DetalhesFuncionarioScreen() {
       <ScrollView contentContainerStyle={styles.content}>
         {/* Subcabeçalho com botão voltar */}
         <View style={styles.subHeader}>
-          <TouchableOpacity onPress={() => navigation.navigate('GestaoFuncionarios')} style={styles.botaoVoltar}>
+          <TouchableOpacity onPress={() => navigation.navigate('GestaoColaboradores')} style={styles.botaoVoltar}>
             <Ionicons name="arrow-back" size={22} color={colors.primary} />
           </TouchableOpacity>
           <View>
             <Text style={styles.tituloTela}>Detalhes e permissões</Text>
-            <Text style={styles.subtituloTela}>Gerencie os dados e acessos do funcionário</Text>
+            <Text style={styles.subtituloTela}>Gerencie os dados e acessos do colaborador</Text>
           </View>
         </View>
 
-        {/* Card de Resumo do Funcionário */}
+        {/* Card de Resumo do Colaborador */}
         <View style={styles.cardResumo}>
           <View style={styles.linhaAvatarInfo}>
             <View style={styles.avatar}>
               <Text style={styles.avatarTexto}>{iniciais}</Text>
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={styles.textoLabelCard}>Nome: <Text style={styles.textoValorCard}>{funcionario?.nome || 'Mariana Souza'}</Text></Text>
-              <Text style={styles.textoLabelCard}>E-mail: <Text style={styles.textoValorCard}>{funcionario?.email || 'mariana.souza@gruposetti.com.br'}</Text></Text>
-              <Text style={styles.textoLabelCard}>Status: <Text style={styles.statusVerde}>{funcionario?.status || 'Ativo'}</Text></Text>
+              <Text style={styles.textoLabelCard}>Nome: <Text style={styles.textoValorCard}>{colaborador?.nome || 'Mariana Souza'}</Text></Text>
+              <Text style={styles.textoLabelCard}>E-mail: <Text style={styles.textoValorCard}>{colaborador?.email || 'mariana.souza@gruposetti.com.br'}</Text></Text>
+              <Text style={styles.textoLabelCard}>Status: <Text style={styles.statusVerde}>{colaborador?.status || 'Ativo'}</Text></Text>
             </View>
           </View>
         </View>
@@ -187,8 +188,8 @@ export default function DetalhesFuncionarioScreen() {
         <View style={styles.linhaSeleitores}>
           <View style={styles.colunaSeletor}>
             <Text style={styles.label}>Perfil de acesso:</Text>
-            <TouchableOpacity 
-              style={styles.inputSeletor} 
+            <TouchableOpacity
+              style={styles.inputSeletor}
               onPress={() => setMostrarListaPerfil(!mostrarListaPerfil)}
             >
               <Text style={styles.inputTextoSimples}>{perfil}</Text>
@@ -212,8 +213,8 @@ export default function DetalhesFuncionarioScreen() {
 
           <View style={styles.colunaSeletor}>
             <Text style={styles.label}>Setor:</Text>
-            <TouchableOpacity 
-              style={styles.inputSeletor} 
+            <TouchableOpacity
+              style={styles.inputSeletor}
               onPress={() => setMostrarListaSetor(!mostrarListaSetor)}
             >
               <Text style={styles.inputTextoSimples}>{setor}</Text>
@@ -269,14 +270,14 @@ export default function DetalhesFuncionarioScreen() {
           <Text style={styles.botaoSalvarTexto}>Salvar alterações</Text>
         </TouchableOpacity>
 
-        {/* Botão Desativar funcionário */}
-        <TouchableOpacity 
-          style={[styles.botaoDesativar, isInativo && styles.botaoAtivarContainer]} 
-          activeOpacity={0.8} 
+        {/* Botão Desativar colaborador */}
+        <TouchableOpacity
+          style={[styles.botaoDesativar, isInativo && styles.botaoAtivarContainer]}
+          activeOpacity={0.8}
           onPress={handleAlternarStatus}
         >
           <Text style={[styles.botaoDesativarTexto, isInativo && styles.botaoAtivarTexto]}>
-            {isInativo ? 'Ativar funcionário' : 'Desativar funcionário'}
+            {isInativo ? 'Ativar colaborador' : 'Desativar colaborador'}
           </Text>
         </TouchableOpacity>
 

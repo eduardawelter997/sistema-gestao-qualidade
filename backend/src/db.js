@@ -78,6 +78,8 @@ function init() {
     // Anexos: tamanho e tipo do arquivo (pra distinguir foto de PDF na galeria)
     'ALTER TABLE anexos ADD COLUMN tamanho INTEGER',
     'ALTER TABLE anexos ADD COLUMN tipo_mime TEXT',
+    // Marca quando um registro foi concluído, pra calcular tempo de resolução
+    'ALTER TABLE registros ADD COLUMN concluido_em TEXT',
   ];
   for (const sql of colunasNovas) {
     try {

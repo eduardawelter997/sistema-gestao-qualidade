@@ -274,12 +274,15 @@ export async function enviarAnexo(
 
 export interface IndicadoresResposta {
   resumo: {
+    opsEmAndamento: number;
     ocorrenciasAbertas: number;
     acoesAtrasadas: number;
     recebimentosProblemas: number;
+    taxaNaoConformidade: number;
     tempoMedio: string;
   };
   grafico: {
+    labels: string[];
     valores: number[];
     alturas: number[];
   };

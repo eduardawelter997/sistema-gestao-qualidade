@@ -6,7 +6,6 @@ import {
   ScrollView,
   TextInput,
   TouchableOpacity,
-  Modal,
   ActivityIndicator,
   Alert,
 } from 'react-native';
@@ -32,21 +31,24 @@ export default function IndicadoresScreen() {
   const [clienteSelecionadoId, setClienteSelecionadoId] = useState<string | null>(null);
   const [clienteSelecionadoNome, setClienteSelecionadoNome] = useState('Todos os clientes e fornecedores');
   
-  // Estados para o modal de seleção de clientes/fornecedores
-  const [modalClienteVisivel, setModalClienteVisivel] = useState(false);
+  // Estado para o dropdown de seleção de clientes/fornecedores
+  const [mostrarClientes, setMostrarClientes] = useState(false);
   const [listaClientes, setListaClientes] = useState<any[]>([]);
 
   const [carregando, setCarregando] = useState(false);
   const [dadosResumo, setDadosResumo] = useState({
-    ocorrenciasAbertas: 5,
-    acoesAtrasadas: 2,
-    recebimentosProblemas: 3,
-    tempoMedio: '4 dias',
+    opsEmAndamento: 0,
+    ocorrenciasAbertas: 0,
+    acoesAtrasadas: 0,
+    recebimentosProblemas: 0,
+    taxaNaoConformidade: 0,
+    tempoMedio: 'Sem dados',
   });
   const [dadosGrafico, setDadosGrafico] = useState({
-  valores: Array(12).fill(0),
-  alturas: Array(12).fill(4),
-});
+    labels: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'],
+    valores: Array(12).fill(0),
+    alturas: Array(12).fill(4),
+  });
 
   useEffect(() => {
     carregarClientesCadastrados();
@@ -162,14 +164,46 @@ export default function IndicadoresScreen() {
 
         {/* Dropdown Interativo de Cliente ou Fornecedor */}
         <Text style={styles.labelCampo}>Cliente ou fornecedor</Text>
-        <TouchableOpacity 
-          style={styles.dropdownBox} 
+        <TouchableOpacity
+          style={styles.dropdownBox}
           activeOpacity={0.8}
-          onPress={() => setModalClienteVisivel(true)}
+          onPress={() => setMostrarClientes(!mostrarClientes)}
         >
           <Text style={styles.dropdownTexto}>{clienteSelecionadoNome}</Text>
           <Ionicons name="chevron-down" size={16} color={colors.textSecondary} />
         </TouchableOpacity>
+        {mostrarClientes && (
+          <View style={styles.dropdownContainer}>
+            <ScrollView style={{ maxHeight: 200 }} nestedScrollEnabled>
+              <TouchableOpacity
+                style={styles.dropdownItem}
+                onPress={() => {
+                  setClienteSelecionadoId(null);
+                  setClienteSelecionadoNome('Todos os clientes e fornecedores');
+                  setMostrarClientes(false);
+                }}
+              >
+                <Text style={styles.dropdownItemTextoDestaque}>Todos os clientes e fornecedores</Text>
+              </TouchableOpacity>
+
+              {listaClientes.map((item) => (
+                <TouchableOpacity
+                  key={item.id}
+                  style={styles.dropdownItem}
+                  onPress={() => {
+                    setClienteSelecionadoId(item.id);
+                    setClienteSelecionadoNome(item.titulo || 'Cliente');
+                    setMostrarClientes(false);
+                  }}
+                >
+                  <Text style={styles.dropdownItemTexto}>
+                    {item.titulo} - <Text style={styles.tipoTexto}>{item.tipo || 'Cliente'}</Text>
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        )}
 
         {/* Bloco do Gráfico */}
         <View style={styles.cardGrafico}>
@@ -182,26 +216,37 @@ export default function IndicadoresScreen() {
 
           {carregando ? (
             <ActivityIndicator size="small" color={colors.primary} style={{ marginVertical: 40 }} />
+          ) : dadosGrafico.labels.length === 0 ? (
+            <Text style={styles.semDados}>Nenhum dado no período selecionado.</Text>
           ) : (
             <View style={styles.graficoBarrasContainer}>
-              {['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'].map((mes, index) => {
-                
-                return (
-                  <View key={mes} style={styles.colunaBarra}>
-                    <Text style={styles.valorBarra}>
-                        {dadosGrafico.valores[index]}
-                    </Text>
-                    <View style={[styles.barraPreenchida,{ height: dadosGrafico.alturas[index] },]}/>
-                    <Text style={styles.legendaBarra}>{mes}</Text>
-                  </View>
-                );
-              })}
+              {dadosGrafico.labels.map((rotulo, index) => (
+                <View key={rotulo} style={styles.colunaBarra}>
+                  <Text style={styles.valorBarra}>{dadosGrafico.valores[index]}</Text>
+                  <View style={[styles.barraPreenchida, { height: dadosGrafico.alturas[index] }]} />
+                  <Text style={styles.legendaBarra} numberOfLines={1}>
+                    {rotulo}
+                  </Text>
+                </View>
+              ))}
             </View>
           )}
         </View>
 
         {/* Cards de Resumo */}
         <Text style={styles.tituloSecaoResumo}>Resumo dos indicadores</Text>
+
+        <View style={styles.linhaCardsResumo}>
+          <View style={styles.cardResumoItem}>
+            <Text style={styles.cardResumoLabel}>OPs em andamento</Text>
+            <Text style={[styles.cardResumoValor, { color: colors.primary }]}>{dadosResumo.opsEmAndamento}</Text>
+          </View>
+
+          <View style={styles.cardResumoItem}>
+            <Text style={styles.cardResumoLabel}>Taxa de não conformidade</Text>
+            <Text style={[styles.cardResumoValor, { color: '#D97706' }]}>{dadosResumo.taxaNaoConformidade}%</Text>
+          </View>
+        </View>
 
         <View style={styles.linhaCardsResumo}>
           <View style={styles.cardResumoItem}>
@@ -228,50 +273,6 @@ export default function IndicadoresScreen() {
         </View>
 
       </ScrollView>
-
-      {/* Modal para Seleção de Cliente / Fornecedor */}
-      <Modal visible={modalClienteVisivel} animationType="slide" transparent={true}>
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContainer}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitulo}>Selecione o cliente ou fornecedor</Text>
-              <TouchableOpacity onPress={() => setModalClienteVisivel(false)}>
-                <Ionicons name="close" size={22} color={colors.textPrimary} />
-              </TouchableOpacity>
-            </View>
-
-            <ScrollView style={styles.modalScroll}>
-              <TouchableOpacity 
-                style={styles.opcaoModal}
-                onPress={() => {
-                  setClienteSelecionadoId(null);
-                  setClienteSelecionadoNome('Todos os clientes e fornecedores');
-                  setModalClienteVisivel(false);
-                }}
-              >
-                <Text style={styles.opcaoModalTextoDestaque}>Todos os clientes e fornecedores</Text>
-              </TouchableOpacity>
-
-              {listaClientes.map((item) => (
-                <TouchableOpacity 
-                  key={item.id} 
-                  style={styles.opcaoModal}
-                  onPress={() => {
-                    setClienteSelecionadoId(item.id);
-                    setClienteSelecionadoNome(item.titulo || 'Cliente');
-                    setModalClienteVisivel(false);
-                  }}
-                >
-                  <Text style={styles.opcaoModalTexto}>
-                    {item.titulo} - <Text style={styles.tipoTexto}>{item.tipo || 'Cliente'}</Text>
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-          </View>
-        </View>
-      </Modal>
-
     </View>
   );
 }
@@ -297,12 +298,30 @@ const styles = StyleSheet.create({
   inputDataTexto: { flex: 1, fontSize: 12, color: colors.textPrimary },
 
   labelCampo: { fontSize: 12, fontWeight: '600', color: colors.textPrimary, marginBottom: 4 },
-  dropdownBox: { backgroundColor: '#FFF', borderRadius: 8, borderWidth: 1, borderColor: colors.border, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 12, height: 44, marginBottom: 16 },
+  dropdownBox: { backgroundColor: '#FFF', borderRadius: 8, borderWidth: 1, borderColor: colors.border, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 12, height: 44 },
   dropdownTexto: { fontSize: 13, color: colors.textPrimary },
+  dropdownContainer: {
+    backgroundColor: '#FFF',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: colors.border,
+    marginTop: 4,
+    marginBottom: 16,
+    overflow: 'hidden',
+  },
+  dropdownItem: {
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F0',
+  },
+  dropdownItemTexto: { fontSize: 13, color: colors.textPrimary },
+  dropdownItemTextoDestaque: { fontSize: 13, fontWeight: 'bold', color: colors.primary },
 
   cardGrafico: { backgroundColor: '#FFF', borderRadius: 8, padding: 14, borderWidth: 1, borderColor: colors.border, marginBottom: 20 },
   tituloGrafico: { fontSize: 14, fontWeight: 'bold', color: colors.textPrimary },
   subtituloGrafico: { fontSize: 11, color: colors.textSecondary, marginBottom: 16 },
+  semDados: { textAlign: 'center', color: colors.textSecondary, fontSize: 12, marginVertical: 40 },
   graficoBarrasContainer: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', height: 130, paddingBottom: 10, borderBottomWidth: 1, borderBottomColor: colors.border },
   colunaBarra: { alignItems: 'center', flex: 1 },
   valorBarra: { fontSize: 10, fontWeight: 'bold', color: colors.primary, marginBottom: 4 },
@@ -314,14 +333,5 @@ const styles = StyleSheet.create({
   cardResumoItem: { flex: 1, backgroundColor: '#FFF', borderRadius: 8, padding: 14, borderWidth: 1, borderColor: colors.border, marginRight: 8 },
   cardResumoLabel: { fontSize: 11, color: colors.textSecondary, marginBottom: 6 },
   cardResumoValor: { fontSize: 18, fontWeight: 'bold' },
-
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', padding: 16 },
-  modalContainer: { backgroundColor: '#FFF', borderRadius: 12, maxHeight: '70%', padding: 20 },
-  modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, borderBottomWidth: 1, borderBottomColor: colors.border, paddingBottom: 10 },
-  modalTitulo: { fontSize: 15, fontWeight: 'bold', color: colors.primary },
-  modalScroll: { maxHeight: 350 },
-  opcaoModal: { paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: colors.border },
-  opcaoModalTexto: { fontSize: 13, color: colors.textPrimary },
-  opcaoModalTextoDestaque: { fontSize: 13, fontWeight: 'bold', color: colors.primary },
   tipoTexto: { color: colors.textSecondary, fontSize: 11 },
 });

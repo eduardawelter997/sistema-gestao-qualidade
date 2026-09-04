@@ -175,7 +175,7 @@ export default function PerfilScreen() {
         </TouchableOpacity>
 
         <Text style={styles.rodapeAviso}>
-          Perfil e setor são gerenciados pela Gestão de Funcionários
+          Perfil e setor são gerenciados pela Gestão de Colaboradores
         </Text>
 
       </ScrollView>
