@@ -115,10 +115,10 @@ router.get('/me', autenticar, (req, res) => {
 });
 
 /**
- * POST /api/auth/cadastrar-funcionario
- * Permite que um gestor cadastre um novo funcionário informando cargo, setor e perfil.
+ * POST /api/auth/cadastrar-colaborador
+ * Permite que um gestor cadastre um novo colaborador informando cargo, setor e perfil.
  */
-router.post('/cadastrar-funcionario', autenticar, (req, res) => {
+router.post('/cadastrar-colaborador', autenticar, (req, res) => {
   const { nome, email, senha, perfil, setor } = req.body;
 
   if (!nome || !email || !senha || !perfil || !setor) {
@@ -135,10 +135,10 @@ router.post('/cadastrar-funcionario', autenticar, (req, res) => {
 
   const senha_hash = bcrypt.hashSync(senha, 10);
 
-  // Insere o funcionário preenchendo as colunas específicas da tabela usuarios
+  // Insere o colaborador preenchendo as colunas específicas da tabela usuarios
   const info = db
     .prepare(`
-      INSERT INTO usuarios (nome, email, senha_hash, cargo, setor, perfil, status) 
+      INSERT INTO usuarios (nome, email, senha_hash, cargo, setor, perfil, status)
       VALUES (?, ?, ?, ?, ?, ?, 'Ativo')
     `)
     .run(nome, email.toLowerCase(), senha_hash, perfil, setor, perfil);
@@ -147,45 +147,45 @@ router.post('/cadastrar-funcionario', autenticar, (req, res) => {
     .prepare('SELECT * FROM usuarios WHERE id = ?')
     .get(info.lastInsertRowid);
 
-  res.status(201).json({ 
-    mensagem: 'Funcionário cadastrado com sucesso!', 
-    usuario: limparUsuario(usuarioCriado) 
+  res.status(201).json({
+    mensagem: 'Colaborador cadastrado com sucesso!',
+    usuario: limparUsuario(usuarioCriado)
   });
 });
 
 /**
- * GET /api/auth/funcionarios
+ * GET /api/auth/colaboradores
  * Retorna a lista de todos os usuários cadastrados para exibir na gestão.
  */
-router.get('/funcionarios', autenticar, (req, res) => {
-  const funcionarios = db
+router.get('/colaboradores', autenticar, (req, res) => {
+  const colaboradores = db
     .prepare('SELECT id, nome, email, cargo, setor, perfil, status, criado_em FROM usuarios')
     .all();
 
-  res.json({ funcionarios });
+  res.json({ colaboradores });
 });
 
-router.patch('/desativar-funcionario/:id', autenticar, (req, res) => {
+router.patch('/desativar-colaborador/:id', autenticar, (req, res) => {
   try {
     const { id } = req.params;
 
-    // Atualiza o status do funcionário no banco SQLite
+    // Atualiza o status do colaborador no banco SQLite
     const info = db
       .prepare('UPDATE usuarios SET status = ? WHERE id = ?')
       .run('Inativo', id);
 
     if (info.changes === 0) {
-      return res.status(404).json({ erro: 'Funcionário não encontrado.' });
+      return res.status(404).json({ erro: 'Colaborador não encontrado.' });
     }
 
-    return res.status(200).json({ mensagem: 'Funcionário desativado com sucesso!' });
+    return res.status(200).json({ mensagem: 'Colaborador desativado com sucesso!' });
   } catch (error) {
-    console.log('Erro ao desativar funcionário:', error);
-    return res.status(500).json({ erro: 'Erro interno ao desativar funcionário.' });
+    console.log('Erro ao desativar colaborador:', error);
+    return res.status(500).json({ erro: 'Erro interno ao desativar colaborador.' });
   }
 });
 
-router.patch('/ativar-funcionario/:id', autenticar, (req, res) => {
+router.patch('/ativar-colaborador/:id', autenticar, (req, res) => {
   try {
     const { id } = req.params;
 
@@ -194,13 +194,13 @@ router.patch('/ativar-funcionario/:id', autenticar, (req, res) => {
       .run('Ativo', id);
 
     if (info.changes === 0) {
-      return res.status(404).json({ erro: 'Funcionário não encontrado.' });
+      return res.status(404).json({ erro: 'Colaborador não encontrado.' });
     }
 
-    return res.status(200).json({ mensagem: 'Funcionário ativado com sucesso!' });
+    return res.status(200).json({ mensagem: 'Colaborador ativado com sucesso!' });
   } catch (error) {
-    console.log('Erro ao ativar funcionário:', error);
-    return res.status(500).json({ erro: 'Erro interno ao ativar funcionário.' });
+    console.log('Erro ao ativar colaborador:', error);
+    return res.status(500).json({ erro: 'Erro interno ao ativar colaborador.' });
   }
 });
 
@@ -214,7 +214,7 @@ router.patch('/atualizar-perfil-setor/:id', autenticar, (req, res) => {
       .run(perfil, setor, id);
 
     if (info.changes === 0) {
-      return res.status(404).json({ erro: 'Funcionário não encontrado.' });
+      return res.status(404).json({ erro: 'Colaborador não encontrado.' });
     }
 
     return res.status(200).json({ mensagem: 'Dados atualizados com sucesso!' });
@@ -296,9 +296,18 @@ router.get('/clientes-fornecedores', autenticar, (req, res) => {
   }
 });
 
+const TIPOS_CANONICOS = [
+  { valor: 'op', rotulo: 'OP' },
+  { valor: 'ocorrencia', rotulo: 'Ocorrência' },
+  { valor: 'acao', rotulo: 'Ação' },
+  { valor: 'recebimento', rotulo: 'Recebimento' },
+];
+
+const SETORES_CANONICOS = ['Produção', 'Qualidade', 'Almoxarifado', 'Laminação', 'Corte', 'Acabamento'];
+
 router.get('/indicadores', autenticar, (req, res) => {
   try {
-    const { inicio, fim, clienteId } = req.query;
+    const { inicio, fim, clienteId, filtro } = req.query;
 
     const inicioFormatado = converterData(inicio);
     const fimFormatado = converterData(fim);
@@ -320,7 +329,46 @@ router.get('/indicadores', autenticar, (req, res) => {
 
     const where = filtros.join(' AND ');
 
+    // Tempo médio de resolução: média de dias entre a criação e a conclusão
+    // das ocorrências concluídas dentro do período (data de conclusão real,
+    // não a mesma coluna "data" usada nos outros filtros).
+    const filtrosConcluido = [
+      "tipo = 'ocorrencia'",
+      'concluido_em IS NOT NULL',
+      'date(concluido_em) BETWEEN date(?) AND date(?)',
+    ];
+    const parametrosConcluido = [inicioFormatado, fimFormatado];
+    if (clienteId) {
+      filtrosConcluido.push('cliente_fornecedor_id = ?');
+      parametrosConcluido.push(clienteId);
+    }
+    const tempoMedioLinha = db
+      .prepare(`
+        SELECT AVG(julianday(concluido_em) - julianday(criado_em)) AS media
+        FROM registros
+        WHERE ${filtrosConcluido.join(' AND ')}
+      `)
+      .get(...parametrosConcluido);
+
+    const totalOps = db
+      .prepare(`SELECT COUNT(*) AS total FROM registros WHERE ${where} AND tipo = 'op'`)
+      .get(...parametros).total;
+
+    const totalOcorrenciasPeriodo = db
+      .prepare(`SELECT COUNT(*) AS total FROM registros WHERE ${where} AND tipo = 'ocorrencia'`)
+      .get(...parametros).total;
+
     const resumo = {
+      opsEmAndamento: db
+        .prepare(`
+          SELECT COUNT(*) AS total
+          FROM registros
+          WHERE ${where}
+            AND tipo = 'op'
+            AND status = 'Em andamento'
+        `)
+        .get(...parametros).total,
+
       ocorrenciasAbertas: db
         .prepare(`
           SELECT COUNT(*) AS total
@@ -351,29 +399,61 @@ router.get('/indicadores', autenticar, (req, res) => {
         `)
         .get(...parametros).total,
 
-      tempoMedio: '4 dias',
+      taxaNaoConformidade:
+        totalOps > 0 ? Math.round((totalOcorrenciasPeriodo / totalOps) * 100) : 0,
+
+      tempoMedio:
+        tempoMedioLinha.media != null ? `${tempoMedioLinha.media.toFixed(1)} dias` : 'Sem dados',
     };
 
-    const registrosPorMes = db
-      .prepare(`
-        SELECT
-          CAST(substr(data, 4, 2) AS INTEGER) AS mes,
-          COUNT(*) AS total
-        FROM registros
-        WHERE ${where}
-        GROUP BY mes
-        ORDER BY mes
-      `)
-      .all(...parametros);
+    // O gráfico muda de acordo com a aba escolhida: por mês (padrão), por
+    // tipo de registro, ou por setor/processo.
+    let labels;
+    let valores;
 
-    const valores = Array(12).fill(0);
+    if (filtro === 'tipo') {
+      const contagens = db
+        .prepare(`SELECT tipo, COUNT(*) AS total FROM registros WHERE ${where} GROUP BY tipo`)
+        .all(...parametros);
+      const mapa = Object.fromEntries(contagens.map((l) => [l.tipo, l.total]));
+      labels = TIPOS_CANONICOS.map((t) => t.rotulo);
+      valores = TIPOS_CANONICOS.map((t) => mapa[t.valor] || 0);
+    } else if (filtro === 'setor') {
+      const contagens = db
+        .prepare(`SELECT processo, COUNT(*) AS total FROM registros WHERE ${where} GROUP BY processo`)
+        .all(...parametros);
+      const mapa = {};
+      let semSetor = 0;
+      contagens.forEach((l) => {
+        if (l.processo && SETORES_CANONICOS.includes(l.processo)) {
+          mapa[l.processo] = l.total;
+        } else {
+          semSetor += l.total;
+        }
+      });
+      labels = [...SETORES_CANONICOS, 'Sem setor'];
+      valores = [...SETORES_CANONICOS.map((s) => mapa[s] || 0), semSetor];
+    } else {
+      const registrosPorMes = db
+        .prepare(`
+          SELECT
+            CAST(substr(data, 4, 2) AS INTEGER) AS mes,
+            COUNT(*) AS total
+          FROM registros
+          WHERE ${where}
+          GROUP BY mes
+          ORDER BY mes
+        `)
+        .all(...parametros);
 
-    registrosPorMes.forEach((registro) => {
-      valores[registro.mes - 1] = registro.total;
-    });
+      labels = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+      valores = Array(12).fill(0);
+      registrosPorMes.forEach((registro) => {
+        valores[registro.mes - 1] = registro.total;
+      });
+    }
 
     const maiorValor = Math.max(...valores, 1);
-
     const alturas = valores.map((valor) =>
       valor === 0 ? 4 : Math.max((valor / maiorValor) * 90, 8)
     );
@@ -381,6 +461,7 @@ router.get('/indicadores', autenticar, (req, res) => {
     res.json({
       resumo,
       grafico: {
+        labels,
         valores,
         alturas,
       },

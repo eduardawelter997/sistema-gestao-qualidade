@@ -78,7 +78,7 @@ export default function MaisScreen() {
         {/* Gestão */}
         <Text style={styles.secao}>Gestão</Text>
         <View style={styles.grupo}>
-          <ItemMenu texto="Gestão de funcionários" onPress={() => navigation.navigate('GestaoFuncionarios')} />
+          <ItemMenu texto="Gestão de colaboradores" onPress={() => navigation.navigate('GestaoColaboradores')} />
           <ItemMenu texto="Indicadores gerenciais" onPress={() => navigation.navigate('Indicadores')} />
           <ItemMenu texto="Cliente e fornecedores" onPress={() => navigation.navigate('ClientesFornecedores')} />
         </View>

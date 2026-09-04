@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -13,19 +13,20 @@ import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Header from '../components/Header';
 import { colors } from '../theme/colors';
+import { API_URL } from '../config/api';
 
-export default function GestaoFuncionariosScreen() {
+export default function GestaoColaboradoresScreen() {
   const navigation = useNavigation<any>();
-  const [funcionarios, setFuncionarios] = useState<any[]>([]);
+  const [colaboradores, setColaboradores] = useState<any[]>([]);
   const [carregando, setCarregando] = useState(true);
 
-  // Função para buscar os funcionários cadastrados na API
-  const buscarFuncionarios = async () => {
+  // Função para buscar os colaboradores cadastrados na API
+  const buscarColaboradores = async () => {
     try {
       setCarregando(true);
       const token = await AsyncStorage.getItem('@gestao_qualidade:token');
 
-      const resposta = await fetch('http://localhost:3000/api/auth/funcionarios', {
+      const resposta = await fetch(`${API_URL}/api/auth/colaboradores`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -35,12 +36,12 @@ export default function GestaoFuncionariosScreen() {
       const dados = await resposta.json();
 
       if (resposta.ok) {
-        setFuncionarios(dados.funcionarios || []);
+        setColaboradores(dados.colaboradores || []);
       } else {
-        Alert.alert('Erro', dados.erro || 'Não foi possível carregar os funcionários.');
+        Alert.alert('Erro', dados.erro || 'Não foi possível carregar os colaboradores.');
       }
     } catch (error) {
-      console.log('Erro ao buscar funcionários:', error);
+      console.log('Erro ao buscar colaboradores:', error);
       Alert.alert('Erro', 'Falha na conexão com o servidor.');
     } finally {
       setCarregando(false);
@@ -50,7 +51,7 @@ export default function GestaoFuncionariosScreen() {
   // Atualiza a lista toda vez que a tela ganha foco (ex: volta da tela de cadastro)
   useFocusEffect(
     useCallback(() => {
-      buscarFuncionarios();
+      buscarColaboradores();
     }, [])
   );
 
@@ -65,66 +66,66 @@ export default function GestaoFuncionariosScreen() {
             <Ionicons name="arrow-back" size={22} color={colors.primary} />
           </TouchableOpacity>
           <View>
-            <Text style={styles.tituloTela}>Gestão de funcionários</Text>
+            <Text style={styles.tituloTela}>Gestão de colaboradores</Text>
             <Text style={styles.subtituloTela}>Gerencie os acessos e equipes do sistema</Text>
           </View>
         </View>
 
         {/* Botão de Convidar / Cadastrar Novo Acesso */}
-        <TouchableOpacity 
-          style={styles.botaoConvidar} 
+        <TouchableOpacity
+          style={styles.botaoConvidar}
           activeOpacity={0.8}
-          onPress={() => navigation.navigate('ConvidarFuncionario')}
+          onPress={() => navigation.navigate('ConvidarColaborador')}
         >
           <Ionicons name="person-add" size={18} color="#FFF" style={{ marginRight: 8 }} />
           <Text style={styles.botaoConvidarTexto}>Cadastrar novo acesso</Text>
         </TouchableOpacity>
 
-        <Text style={styles.secaoTitulo}>Funcionários cadastrados</Text>
+        <Text style={styles.secaoTitulo}>Colaboradores cadastrados</Text>
 
         {carregando ? (
           <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: 20 }} />
-        ) : funcionarios.length === 0 ? (
-          <Text style={styles.vazioTexto}>Nenhum funcionário cadastrado ainda.</Text>
+        ) : colaboradores.length === 0 ? (
+          <Text style={styles.vazioTexto}>Nenhum colaborador cadastrado ainda.</Text>
         ) : (
-          funcionarios.map((func) => {
+          colaboradores.map((colaborador) => {
             // Gera as iniciais do nome (ex: "Carlos Silva" -> "CS")
-            const iniciais = func.nome
-              ? func.nome.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()
+            const iniciais = colaborador.nome
+              ? colaborador.nome.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()
               : 'US';
 
-            const isInativo = func.status === 'Inativo'; // 👈 Identifica se está inativo
+            const isInativo = colaborador.status === 'Inativo'; // 👈 Identifica se está inativo
 
             return (
-              <View key={func.id} style={styles.cardFuncionario}>
+              <View key={colaborador.id} style={styles.cardColaborador}>
                 <View style={styles.avatar}>
                   <Text style={styles.avatarTexto}>{iniciais}</Text>
                 </View>
-                
+
                 <View style={{ flex: 1 }}>
-                  <Text style={styles.nomeFuncionario}>{func.nome}</Text>
-                  <Text style={styles.emailFuncionario}>{func.email}</Text>
-                  <Text style={styles.detalhesFuncionario}>
-                    {func.perfil} | Setor: {func.setor}
+                  <Text style={styles.nomeColaborador}>{colaborador.nome}</Text>
+                  <Text style={styles.emailColaborador}>{colaborador.email}</Text>
+                  <Text style={styles.detalhesColaborador}>
+                    {colaborador.perfil} | Setor: {colaborador.setor}
                   </Text>
                 </View>
 
                 {/* Lado direito: Status dinâmico e opções */}
                 <View style={styles.direitaCard}>
                   <View style={[
-                    styles.statusBadge, 
+                    styles.statusBadge,
                     isInativo && styles.statusBadgeInativo
                   ]}>
                     <Text style={[
-                      styles.statusTexto, 
+                      styles.statusTexto,
                       isInativo && styles.statusTextoInativo
                     ]}>
-                      {func.status || 'Ativo'}
+                      {colaborador.status || 'Ativo'}
                     </Text>
                   </View>
 
-                  <TouchableOpacity 
-                    onPress={() => navigation.navigate('DetalhesFuncionario', { funcionario: func })}
+                  <TouchableOpacity
+                    onPress={() => navigation.navigate('DetalhesColaborador', { colaborador })}
                     style={styles.botaoOpcoes}
                   >
                     <Ionicons name="ellipsis-vertical" size={18} color={colors.textSecondary} />
@@ -191,7 +192,7 @@ const styles = StyleSheet.create({
     marginTop: 20,
     fontSize: 14,
   },
-  cardFuncionario: {
+  cardColaborador: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#FFF',
@@ -215,17 +216,17 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 14,
   },
-  nomeFuncionario: {
+  nomeColaborador: {
     fontSize: 15,
     fontWeight: '700',
     color: colors.textPrimary,
   },
-  emailFuncionario: {
+  emailColaborador: {
     fontSize: 12,
     color: colors.textSecondary,
     marginTop: 1,
   },
-  detalhesFuncionario: {
+  detalhesColaborador: {
     fontSize: 11,
     color: colors.primary,
     fontWeight: '600',
@@ -258,4 +259,3 @@ const styles = StyleSheet.create({
     color: '#C5221F', // Texto vermelho escuro para inativo
   },
 });
-

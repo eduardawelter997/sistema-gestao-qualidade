@@ -16,9 +16,9 @@ import NovaOpScreen from '../screens/NovaOpScreen';
 import CadastrarClienteScreen from '../screens/CadastrarClienteScreen';
 import OpDetalheScreen from '../screens/OpDetalheScreen';
 import NovoRegistroOpScreen from '../screens/NovoRegistroOpScreen';
-import GestaoFuncionariosScreen from '../screens/GestaoFuncionariosScreen';
-import ConvidarFuncionarioScreen from '../screens/ConvidarFuncionarioScreen';
-import DetalhesFuncionarioScreen from '../screens/DetalhesFuncionarioScreen';
+import GestaoColaboradoresScreen from '../screens/GestaoColaboradoresScreen';
+import ConvidarColaboradorScreen from '../screens/ConvidarColaboradorScreen';
+import DetalhesColaboradorScreen from '../screens/DetalhesColaboradorScreen';
 import PerfilScreen from '../screens/PerfilScreen';
 import AlterarSenhaScreen from '../screens/AlterarSenhaScreen';
 import NovaOcorrenciaScreen from '../screens/NovaOcorrenciaScreen';
@@ -55,9 +55,9 @@ export default function AppTabs() {
             CadastrarCliente: 'person-add',
             OpDetalhe: 'document-text',
             NovoRegistroOp: 'add-circle-outline',
-            GestaoFuncionarios: 'people',
-            ConvidarFuncionario: 'person-add-outline',
-            DetalhesFuncionario: 'person-circle-outline',
+            GestaoColaboradores: 'people',
+            ConvidarColaborador: 'person-add-outline',
+            DetalhesColaborador: 'person-circle-outline',
             Perfil: 'person-circle',
             AlterarSenha: 'lock-closed-outline',
             NovaOcorrencia: 'warning',
@@ -113,25 +113,25 @@ export default function AppTabs() {
         options={{ tabBarButton: () => null, headerShown: false }}
       />
 
-      <Tab.Screen 
-        name="GestaoFuncionarios" 
-        component={GestaoFuncionariosScreen} 
-        options={{ 
-        tabBarButton: () => null, 
-        headerShown: false 
-        }} 
+      <Tab.Screen
+        name="GestaoColaboradores"
+        component={GestaoColaboradoresScreen}
+        options={{
+        tabBarButton: () => null,
+        headerShown: false
+        }}
       />
 
-      <Tab.Screen 
-        name="ConvidarFuncionario" 
-        component={ConvidarFuncionarioScreen} 
-        options={{ tabBarButton: () => null, headerShown: false }} 
+      <Tab.Screen
+        name="ConvidarColaborador"
+        component={ConvidarColaboradorScreen}
+        options={{ tabBarButton: () => null, headerShown: false }}
       />
 
-      <Tab.Screen 
-        name="DetalhesFuncionario" 
-        component={DetalhesFuncionarioScreen} 
-        options={{ tabBarButton: () => null, headerShown: false }} 
+      <Tab.Screen
+        name="DetalhesColaborador"
+        component={DetalhesColaboradorScreen}
+        options={{ tabBarButton: () => null, headerShown: false }}
       />
 
       <Tab.Screen 

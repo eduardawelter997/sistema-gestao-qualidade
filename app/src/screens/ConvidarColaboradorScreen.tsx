@@ -11,9 +11,10 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { colors } from '../theme/colors';
+import { API_URL } from '../config/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-export default function ConvidarFuncionarioScreen() {
+export default function ConvidarColaboradorScreen() {
   const navigation = useNavigation<any>();
 
   const [nome, setNome] = useState('');
@@ -48,7 +49,7 @@ export default function ConvidarFuncionarioScreen() {
       const token = await AsyncStorage.getItem('@gestao_qualidade:token');
 
       const novoUsuarioLogin = {
-        tipo: 'funcionario',
+        tipo: 'colaborador',
         titulo: nome,
         email: email,
         senha: senha,
@@ -57,7 +58,7 @@ export default function ConvidarFuncionarioScreen() {
         iniciais: nome.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase(),
       };
 
-      const resposta = await fetch('http://localhost:3000/api/auth/cadastrar-funcionario', {
+      const resposta = await fetch(`${API_URL}/api/auth/cadastrar-colaborador`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -69,7 +70,7 @@ export default function ConvidarFuncionarioScreen() {
         senha,
         perfil,
         setor,
-        }), 
+        }),
       });
 
       if (resposta.ok) {
@@ -80,8 +81,8 @@ export default function ConvidarFuncionarioScreen() {
         setPerfil('');
         setSetor('');
 
-        Alert.alert('Sucesso', 'Acesso do funcionário cadastrado com sucesso!');
-        navigation.navigate('GestaoFuncionarios');
+        Alert.alert('Sucesso', 'Acesso do colaborador cadastrado com sucesso!');
+        navigation.navigate('GestaoColaboradores');
       } else {
         Alert.alert('Erro', 'O servidor recusou o cadastro do acesso.');
       }
@@ -102,12 +103,12 @@ export default function ConvidarFuncionarioScreen() {
       <ScrollView contentContainerStyle={styles.content}>
         {/* Subcabeçalho */}
         <View style={styles.subHeader}>
-          <TouchableOpacity onPress={() => navigation.navigate('GestaoFuncionarios')} style={styles.botaoVoltar}>
+          <TouchableOpacity onPress={() => navigation.navigate('GestaoColaboradores')} style={styles.botaoVoltar}>
             <Ionicons name="arrow-back" size={22} color={colors.primary} />
           </TouchableOpacity>
           <View>
             <Text style={styles.tituloTela}>Cadastrar Acesso</Text>
-            <Text style={styles.subtituloTela}>Crie as credenciais de login do funcionário</Text>
+            <Text style={styles.subtituloTela}>Crie as credenciais de login do colaborador</Text>
           </View>
         </View>
 
@@ -146,8 +147,8 @@ export default function ConvidarFuncionarioScreen() {
 
         {/* Perfil de acesso */}
         <Text style={styles.label}>Perfil de acesso: <Text style={styles.obrigatorio}>*</Text></Text>
-        <TouchableOpacity 
-          style={styles.inputSeletor} 
+        <TouchableOpacity
+          style={styles.inputSeletor}
           onPress={() => setMostrarListaPerfil(!mostrarListaPerfil)}
         >
           <Text style={[styles.inputTextoSimples, !perfil && { color: colors.textSecondary }]}>
@@ -175,8 +176,8 @@ export default function ConvidarFuncionarioScreen() {
 
         {/* Setor */}
         <Text style={styles.label}>Setor: <Text style={styles.obrigatorio}>*</Text></Text>
-        <TouchableOpacity 
-          style={styles.inputSeletor} 
+        <TouchableOpacity
+          style={styles.inputSeletor}
           onPress={() => setMostrarListaSetor(!mostrarListaSetor)}
         >
           <Text style={[styles.inputTextoSimples, !setor && { color: colors.textSecondary }]}>
@@ -210,7 +211,7 @@ export default function ConvidarFuncionarioScreen() {
         </TouchableOpacity>
 
         <Text style={styles.rodapeAviso}>
-          O funcionário poderá usar este e-mail e senha para logar diretamente no aplicativo.
+          O colaborador poderá usar este e-mail e senha para logar diretamente no aplicativo.
         </Text>
 
       </ScrollView>

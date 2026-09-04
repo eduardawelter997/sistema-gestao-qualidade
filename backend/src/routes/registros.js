@@ -120,18 +120,26 @@ router.patch('/registros/:id', (req, res) => {
     notaFiscal, comProblema,
   } = req.body;
 
+  const statusFinal = status ?? existente.status;
+  // Marca a data de conclusão na primeira vez que o status vira "Concluído"
+  // (usado pra calcular o tempo médio de resolução nos indicadores).
+  const concluidoEm =
+    statusFinal === 'Concluído' && existente.status !== 'Concluído'
+      ? new Date().toISOString().slice(0, 19).replace('T', ' ')
+      : existente.concluido_em;
+
   db.prepare(
     `UPDATE registros SET
       tipo = ?, titulo = ?, descricao = ?, status = ?, responsavel = ?, produto = ?, processo = ?, data = ?,
       lote = ?, quantidade = ?, disposicao = ?, origem = ?, metodo_analise = ?, analise_causa = ?,
       op_relacionada_id = ?, ocorrencia_relacionada_id = ?, cliente_fornecedor_id = ?,
-      nota_fiscal = ?, com_problema = ?
+      nota_fiscal = ?, com_problema = ?, concluido_em = ?
      WHERE id = ?`
   ).run(
     tipo ?? existente.tipo,
     titulo ?? existente.titulo,
     descricao ?? existente.descricao,
-    status ?? existente.status,
+    statusFinal,
     responsavel ?? existente.responsavel,
     produto ?? existente.produto,
     processo ?? existente.processo,
@@ -147,6 +155,7 @@ router.patch('/registros/:id', (req, res) => {
     clienteFornecedorId !== undefined ? clienteFornecedorId : existente.cliente_fornecedor_id,
     notaFiscal ?? existente.nota_fiscal,
     comProblema !== undefined ? (comProblema ? 1 : 0) : existente.com_problema,
+    concluidoEm,
     id
   );
 
