@@ -27,6 +27,7 @@ import NovaAcaoCorretivaScreen from '../screens/NovaAcaoCorretivaScreen';
 import AcaoDetalheScreen from '../screens/AcaoDetalheScreen';
 import NovoRecebimentoScreen from '../screens/NovoRecebimentoScreen';
 import RecebimentoDetalheScreen from '../screens/RecebimentoDetalheScreen';
+import NovoProdutoNaoConformeScreen from '../screens/NovoProdutoNaoConformeScreen';
 import FotosAnexosScreen from '../screens/FotosAnexosScreen';
 import ClientesFornecedoresScreen from '../screens/ClientesFornecedoresScreen';
 import SobreScreen from '../screens/SobreScreen';
@@ -66,6 +67,7 @@ export default function AppTabs() {
             AcaoDetalhe: 'construct-outline',
             NovoRecebimento: 'cube',
             RecebimentoDetalhe: 'cube-outline',
+            NovoProdutoNaoConforme: 'alert-circle-outline',
             FotosAnexos: 'images',
             ClientesFornecedores: 'business-outline',
             Sobre: 'information-circle-outline',
@@ -174,6 +176,11 @@ export default function AppTabs() {
       <Tab.Screen
         name="RecebimentoDetalhe"
         component={RecebimentoDetalheScreen}
+        options={{ tabBarButton: () => null, headerShown: false }}
+      />
+      <Tab.Screen
+        name="NovoProdutoNaoConforme"
+        component={NovoProdutoNaoConformeScreen}
         options={{ tabBarButton: () => null, headerShown: false }}
       />
       <Tab.Screen

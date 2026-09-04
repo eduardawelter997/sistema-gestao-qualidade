@@ -216,6 +216,14 @@ export default function InicioScreen() {
                 onPress={() => navigation.navigate('NovaAcaoCorretiva', {})}
               />
             </View>
+            <TouchableOpacity
+              style={styles.acaoRapidaLarga}
+              activeOpacity={0.7}
+              onPress={() => navigation.navigate('NovoProdutoNaoConforme')}
+            >
+              <Ionicons name="add" size={16} color={colors.primary} />
+              <Text style={styles.acaoRapidaLargaTexto}>Produto não conforme</Text>
+            </TouchableOpacity>
 
             {/* Registros recentes */}
             <Text style={styles.tituloSecao}>Registros recentes</Text>
@@ -348,6 +356,23 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: colors.textSecondary,
     textAlign: 'center',
+  },
+  acaoRapidaLarga: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.cardBg,
+    borderRadius: 10,
+    paddingVertical: 14,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
+    gap: 4,
+  },
+  acaoRapidaLargaTexto: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: colors.primary,
   },
   recente: {
     flexDirection: 'row',
