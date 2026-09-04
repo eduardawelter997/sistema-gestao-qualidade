@@ -28,6 +28,10 @@ import AcaoDetalheScreen from '../screens/AcaoDetalheScreen';
 import NovoRecebimentoScreen from '../screens/NovoRecebimentoScreen';
 import RecebimentoDetalheScreen from '../screens/RecebimentoDetalheScreen';
 import FotosAnexosScreen from '../screens/FotosAnexosScreen';
+import ClientesFornecedoresScreen from '../screens/ClientesFornecedoresScreen';
+import SobreScreen from '../screens/SobreScreen';
+import AjudaScreen from '../screens/AjudaScreen';
+import IndicadoresScreen from '../screens/IndicadoresScreen';
 
 
 const Tab = createBottomTabNavigator<AppTabParamList>();
@@ -172,6 +176,30 @@ export default function AppTabs() {
         name="FotosAnexos"
         component={FotosAnexosScreen}
         options={{ tabBarButton: () => null, headerShown: false }}
+      />
+
+      <Tab.Screen 
+        name="ClientesFornecedores" 
+        component={ClientesFornecedoresScreen} 
+        options={{ tabBarButton: () => null, headerShown: false }} 
+      />
+
+      <Tab.Screen 
+        name="Sobre" 
+        component={SobreScreen} 
+        options={{ tabBarButton: () => null, headerShown: false }} 
+      />
+
+      <Tab.Screen 
+        name="Ajuda" 
+        component={AjudaScreen} 
+        options={{ tabBarButton: () => null, headerShown: false }} 
+      />
+
+      <Tab.Screen 
+        name="Indicadores" 
+        component={IndicadoresScreen} 
+        options={{ tabBarButton: () => null, headerShown: false }} 
       />
     </Tab.Navigator>
   );

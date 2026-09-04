@@ -271,3 +271,24 @@ export async function enviarAnexo(
   }
   return corpo as Anexo;
 }
+
+export function buscarIndicadores(
+  inicio: string,
+  fim: string,
+  clienteId?: number | null,
+  filtro = 'periodo'
+) {
+  const params = new URLSearchParams({
+    inicio,
+    fim,
+    filtro,
+  });
+
+  if (clienteId) {
+    params.append('clienteId', String(clienteId));
+  }
+
+  return request<IndicadoresResposta>(
+    `/api/auth/indicadores?${params.toString()}`
+  );
+}

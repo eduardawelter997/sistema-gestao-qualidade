@@ -11,6 +11,20 @@ const { autenticar } = require('../auth-middleware');
 
 const router = express.Router();
 
+function converterData(data) {
+  if (!data) {
+    return new Date().toISOString().split('T')[0];
+  }
+
+  const partes = data.split('/');
+
+  if (partes.length === 3) {
+    return `${partes[2]}-${partes[1]}-${partes[0]}`;
+  }
+
+  return data;
+}
+
 // Remove o hash da senha antes de devolver o usuário para o app
 function limparUsuario(u) {
   if (!u) return null;
@@ -265,6 +279,117 @@ router.put('/senha', autenticar, (req, res) => {
   } catch (error) {
     console.log('Erro ao alterar senha:', error);
     return res.status(500).json({ erro: 'Erro interno ao alterar senha.' });
+  }
+});
+
+/**
+ * GET /api/clientes-fornecedores
+ * Retorna a lista de clientes e fornecedores cadastrados.
+ */
+router.get('/clientes-fornecedores', autenticar, (req, res) => {
+  try {
+    const lista = db.prepare('SELECT * FROM clientes_fornecedores ORDER BY nome ASC').all();
+    return res.status(200).json({ clientesFornecedores: lista });
+  } catch (error) {
+    console.log('Erro ao buscar clientes e fornecedores:', error);
+    return res.status(500).json({ erro: 'Erro interno ao buscar registros.' });
+  }
+});
+
+router.get('/indicadores', autenticar, (req, res) => {
+  try {
+    const { inicio, fim, clienteId } = req.query;
+
+    const inicioFormatado = converterData(inicio);
+    const fimFormatado = converterData(fim);
+
+    const filtros = [
+        `date(
+        substr(data, 7, 4) || '-' ||
+        substr(data, 4, 2) || '-' ||
+        substr(data, 1, 2)
+      ) BETWEEN date(?) AND date(?)`,
+    ];
+
+    const parametros = [inicioFormatado, fimFormatado];
+
+    if (clienteId) {
+      filtros.push('cliente_fornecedor_id = ?');
+      parametros.push(clienteId);
+    }
+
+    const where = filtros.join(' AND ');
+
+    const resumo = {
+      ocorrenciasAbertas: db
+        .prepare(`
+          SELECT COUNT(*) AS total
+          FROM registros
+          WHERE ${where}
+            AND tipo = 'ocorrencia'
+            AND status = 'Aberta'
+        `)
+        .get(...parametros).total,
+
+      acoesAtrasadas: db
+        .prepare(`
+          SELECT COUNT(*) AS total
+          FROM registros
+          WHERE ${where}
+            AND tipo = 'acao'
+            AND status = 'Atrasada'
+        `)
+        .get(...parametros).total,
+
+      recebimentosProblemas: db
+        .prepare(`
+          SELECT COUNT(*) AS total
+          FROM registros
+          WHERE ${where}
+            AND tipo = 'recebimento'
+            AND com_problema = 1
+        `)
+        .get(...parametros).total,
+
+      tempoMedio: '4 dias',
+    };
+
+    const registrosPorMes = db
+      .prepare(`
+        SELECT
+          CAST(substr(data, 4, 2) AS INTEGER) AS mes,
+          COUNT(*) AS total
+        FROM registros
+        WHERE ${where}
+        GROUP BY mes
+        ORDER BY mes
+      `)
+      .all(...parametros);
+
+    const valores = Array(12).fill(0);
+
+    registrosPorMes.forEach((registro) => {
+      valores[registro.mes - 1] = registro.total;
+    });
+
+    const maiorValor = Math.max(...valores, 1);
+
+    const alturas = valores.map((valor) =>
+      valor === 0 ? 4 : Math.max((valor / maiorValor) * 90, 8)
+    );
+
+    res.json({
+      resumo,
+      grafico: {
+        valores,
+        alturas,
+      },
+    });
+  } catch (error) {
+    console.log('Erro ao gerar indicadores:', error);
+    res.status(500).json({
+      erro: 'Erro interno ao gerar indicadores.',
+    });
   }
 });
 
