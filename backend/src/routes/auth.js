@@ -268,4 +268,18 @@ router.put('/senha', autenticar, (req, res) => {
   }
 });
 
+/**
+ * GET /api/clientes-fornecedores
+ * Retorna a lista de clientes e fornecedores cadastrados.
+ */
+router.get('/clientes-fornecedores', autenticar, (req, res) => {
+  try {
+    const lista = db.prepare('SELECT * FROM clientes_fornecedores ORDER BY nome ASC').all();
+    return res.status(200).json({ clientesFornecedores: lista });
+  } catch (error) {
+    console.log('Erro ao buscar clientes e fornecedores:', error);
+    return res.status(500).json({ erro: 'Erro interno ao buscar registros.' });
+  }
+});
+
 module.exports = router;

@@ -79,15 +79,15 @@ export default function MaisScreen() {
         <Text style={styles.secao}>Gestão</Text>
         <View style={styles.grupo}>
           <ItemMenu texto="Gestão de funcionários" onPress={() => navigation.navigate('GestaoFuncionarios')} />
-          <ItemMenu texto="Indicadores gerenciais" onPress={emBreve} />
-          <ItemMenu texto="Cliente e fornecedores" onPress={emBreve} />
+          <ItemMenu texto="Indicadores gerenciais" onPress={() => navigation.navigate('Indicadores')} />
+          <ItemMenu texto="Cliente e fornecedores" onPress={() => navigation.navigate('ClientesFornecedores')} />
         </View>
 
         {/* Outros */}
         <Text style={styles.secao}>Outros</Text>
         <View style={styles.grupo}>
-          <ItemMenu texto="Ajuda e suporte" onPress={emBreve} />
-          <ItemMenu texto="Sobre o aplicativo" onPress={emBreve} />
+          <ItemMenu texto="Ajuda e suporte" onPress={() => navigation.navigate('Ajuda')} />
+          <ItemMenu texto="Sobre o aplicativo" onPress={() => navigation.navigate('Sobre')} />
           <ItemMenu
             texto="Sair do aplicativo"
             cor={colors.danger}
