@@ -6,7 +6,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
 const { db } = require('../db');
-const { SECRET, TOKEN_EXPIRA_EM } = require('../config');
+const { SECRET, TOKEN_EXPIRA_EM, CODIGO_RECUPERACAO_MESTRE } = require('../config');
 const { autenticar } = require('../auth-middleware');
 
 const router = express.Router();
@@ -89,6 +89,12 @@ router.post('/login', (req, res) => {
     return res.status(401).json({ erro: 'E-mail ou senha inválidos.' });
   }
 
+  if (usuario.status === 'Pendente') {
+    return res.status(403).json({
+      erro: 'Este acesso ainda não foi ativado. Use "Primeiro acesso" com a senha inicial cadastrada pelo gestor.',
+    });
+  }
+
   const token = jwt.sign(
     { id: usuario.id, nome: usuario.nome, email: usuario.email },
     SECRET,
@@ -135,11 +141,13 @@ router.post('/cadastrar-colaborador', autenticar, (req, res) => {
 
   const senha_hash = bcrypt.hashSync(senha, 10);
 
-  // Insere o colaborador preenchendo as colunas específicas da tabela usuarios
+  // Insere o colaborador preenchendo as colunas específicas da tabela usuarios.
+  // Status "Pendente": o colaborador só fica com o acesso liberado depois de
+  // ativar pela tela "Primeiro acesso", usando essa mesma senha inicial.
   const info = db
     .prepare(`
       INSERT INTO usuarios (nome, email, senha_hash, cargo, setor, perfil, status)
-      VALUES (?, ?, ?, ?, ?, ?, 'Ativo')
+      VALUES (?, ?, ?, ?, ?, ?, 'Pendente')
     `)
     .run(nome, email.toLowerCase(), senha_hash, perfil, setor, perfil);
 
@@ -151,6 +159,105 @@ router.post('/cadastrar-colaborador', autenticar, (req, res) => {
     mensagem: 'Colaborador cadastrado com sucesso!',
     usuario: limparUsuario(usuarioCriado)
   });
+});
+
+/**
+ * POST /api/auth/ativar-acesso
+ * Ativa o acesso de um colaborador cadastrado por um gestor (status
+ * "Pendente"), conferindo a senha inicial. Já devolve token (login
+ * automático), igual ao /login.
+ */
+router.post('/ativar-acesso', (req, res) => {
+  const { nome, email, senha } = req.body;
+
+  if (!nome || !email || !senha) {
+    return res.status(400).json({ erro: 'Informe nome, e-mail e senha inicial.' });
+  }
+
+  const usuario = db
+    .prepare('SELECT * FROM usuarios WHERE email = ?')
+    .get(email.toLowerCase());
+
+  if (!usuario) {
+    return res.status(404).json({ erro: 'Nenhum acesso encontrado para este e-mail.' });
+  }
+
+  if (usuario.status !== 'Pendente') {
+    return res.status(409).json({ erro: 'Este acesso já foi ativado. Use a tela de login.' });
+  }
+
+  if (!bcrypt.compareSync(senha, usuario.senha_hash)) {
+    return res.status(401).json({ erro: 'Senha inicial incorreta.' });
+  }
+
+  db.prepare("UPDATE usuarios SET nome = ?, status = 'Ativo' WHERE id = ?")
+    .run(nome, usuario.id);
+
+  const usuarioAtivado = db.prepare('SELECT * FROM usuarios WHERE id = ?').get(usuario.id);
+
+  const token = jwt.sign(
+    { id: usuarioAtivado.id, nome: usuarioAtivado.nome, email: usuarioAtivado.email },
+    SECRET,
+    { expiresIn: TOKEN_EXPIRA_EM }
+  );
+
+  res.json({ token, usuario: limparUsuario(usuarioAtivado) });
+});
+
+/**
+ * POST /api/auth/verificar-codigo
+ * Confere o código padrão de recuperação de senha (fixo, não há servidor
+ * de e-mail configurado) e se o e-mail informado existe.
+ */
+router.post('/verificar-codigo', (req, res) => {
+  const { email, codigo } = req.body;
+
+  if (!email || !codigo) {
+    return res.status(400).json({ erro: 'Informe o e-mail e o código.' });
+  }
+
+  const usuario = db
+    .prepare('SELECT id FROM usuarios WHERE email = ?')
+    .get(email.toLowerCase());
+
+  if (!usuario) {
+    return res.status(404).json({ erro: 'Nenhuma conta encontrada para este e-mail.' });
+  }
+
+  if (codigo !== CODIGO_RECUPERACAO_MESTRE) {
+    return res.status(400).json({ erro: 'Código de recuperação inválido.' });
+  }
+
+  res.json({ valido: true });
+});
+
+/**
+ * POST /api/auth/redefinir-senha
+ * Revalida o código padrão de recuperação e grava a nova senha.
+ */
+router.post('/redefinir-senha', (req, res) => {
+  const { email, codigo, novaSenha } = req.body;
+
+  if (!email || !codigo || !novaSenha) {
+    return res.status(400).json({ erro: 'Informe o e-mail, o código e a nova senha.' });
+  }
+
+  if (codigo !== CODIGO_RECUPERACAO_MESTRE) {
+    return res.status(400).json({ erro: 'Código de recuperação inválido.' });
+  }
+
+  const usuario = db
+    .prepare('SELECT * FROM usuarios WHERE email = ?')
+    .get(email.toLowerCase());
+
+  if (!usuario) {
+    return res.status(404).json({ erro: 'Nenhuma conta encontrada para este e-mail.' });
+  }
+
+  const novoHash = bcrypt.hashSync(novaSenha, 10);
+  db.prepare('UPDATE usuarios SET senha_hash = ? WHERE id = ?').run(novoHash, usuario.id);
+
+  res.json({ mensagem: 'Senha redefinida com sucesso!' });
 });
 
 /**
@@ -312,7 +419,11 @@ router.get('/indicadores', autenticar, (req, res) => {
     const inicioFormatado = converterData(inicio);
     const fimFormatado = converterData(fim);
 
+    // Clientes e fornecedores ficam salvos na mesma tabela `registros`
+    // (são cadastro, não eventos da qualidade), então precisam ficar de
+    // fora de todo indicador — senão entram na contagem por período/setor.
     const filtros = [
+        "tipo NOT IN ('cliente', 'fornecedor')",
         `date(
         substr(data, 7, 4) || '-' ||
         substr(data, 4, 2) || '-' ||

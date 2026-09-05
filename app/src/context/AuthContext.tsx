@@ -20,7 +20,7 @@ interface AuthContextData {
   usuario: Usuario | null;
   carregando: boolean; // true enquanto verifica se já havia login salvo
   entrar: (email: string, senha: string) => Promise<void>;
-  cadastrar: (nome: string, email: string, senha: string) => Promise<void>;
+  ativarAcesso: (nome: string, email: string, senha: string) => Promise<void>;
   sair: () => Promise<void>;
 }
 
@@ -57,8 +57,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUsuario(usuario);
   }
 
-  async function cadastrar(nome: string, email: string, senha: string) {
-    const { token, usuario } = await api.register(nome, email, senha);
+  async function ativarAcesso(nome: string, email: string, senha: string) {
+    const { token, usuario } = await api.ativarAcesso(nome, email, senha);
     api.definirToken(token);
     await AsyncStorage.setItem(CHAVE_TOKEN, token);
     setUsuario(usuario);
@@ -72,7 +72,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ usuario, carregando, entrar, cadastrar, sair }}
+      value={{ usuario, carregando, entrar, ativarAcesso, sair }}
     >
       {children}
     </AuthContext.Provider>
