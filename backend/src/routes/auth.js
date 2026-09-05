@@ -412,6 +412,29 @@ const TIPOS_CANONICOS = [
 
 const SETORES_CANONICOS = ['Produção', 'Qualidade', 'Almoxarifado', 'Laminação', 'Corte', 'Acabamento'];
 
+// Filtro base compartilhado por /indicadores e /indicadores/detalhe: período
+// + cliente/fornecedor (opcional). Clientes e fornecedores ficam salvos na
+// mesma tabela `registros` (são cadastro, não eventos da qualidade), então
+// precisam ficar de fora de todo indicador — senão entram na contagem.
+function construirFiltroBase(inicioFormatado, fimFormatado, clienteId) {
+  const filtros = [
+    "tipo NOT IN ('cliente', 'fornecedor')",
+    `date(
+      substr(data, 7, 4) || '-' ||
+      substr(data, 4, 2) || '-' ||
+      substr(data, 1, 2)
+    ) BETWEEN date(?) AND date(?)`,
+  ];
+  const parametros = [inicioFormatado, fimFormatado];
+
+  if (clienteId) {
+    filtros.push('cliente_fornecedor_id = ?');
+    parametros.push(clienteId);
+  }
+
+  return { filtros, parametros };
+}
+
 router.get('/indicadores', autenticar, (req, res) => {
   try {
     const { inicio, fim, clienteId, filtro } = req.query;
@@ -419,25 +442,7 @@ router.get('/indicadores', autenticar, (req, res) => {
     const inicioFormatado = converterData(inicio);
     const fimFormatado = converterData(fim);
 
-    // Clientes e fornecedores ficam salvos na mesma tabela `registros`
-    // (são cadastro, não eventos da qualidade), então precisam ficar de
-    // fora de todo indicador — senão entram na contagem por período/setor.
-    const filtros = [
-        "tipo NOT IN ('cliente', 'fornecedor')",
-        `date(
-        substr(data, 7, 4) || '-' ||
-        substr(data, 4, 2) || '-' ||
-        substr(data, 1, 2)
-      ) BETWEEN date(?) AND date(?)`,
-    ];
-
-    const parametros = [inicioFormatado, fimFormatado];
-
-    if (clienteId) {
-      filtros.push('cliente_fornecedor_id = ?');
-      parametros.push(clienteId);
-    }
-
+    const { filtros, parametros } = construirFiltroBase(inicioFormatado, fimFormatado, clienteId);
     const where = filtros.join(' AND ');
 
     // Tempo médio de resolução: média de dias entre a criação e a conclusão
@@ -518,9 +523,12 @@ router.get('/indicadores', autenticar, (req, res) => {
     };
 
     // O gráfico muda de acordo com a aba escolhida: por mês (padrão), por
-    // tipo de registro, ou por setor/processo.
+    // tipo de registro, ou por setor/processo. `chaves` guarda o valor "cru"
+    // de cada barra (não o rótulo exibido), usado por /indicadores/detalhe
+    // pra buscar os registros por trás da barra clicada.
     let labels;
     let valores;
+    let chaves;
 
     if (filtro === 'tipo') {
       const contagens = db
@@ -529,6 +537,7 @@ router.get('/indicadores', autenticar, (req, res) => {
       const mapa = Object.fromEntries(contagens.map((l) => [l.tipo, l.total]));
       labels = TIPOS_CANONICOS.map((t) => t.rotulo);
       valores = TIPOS_CANONICOS.map((t) => mapa[t.valor] || 0);
+      chaves = TIPOS_CANONICOS.map((t) => t.valor);
     } else if (filtro === 'setor') {
       const contagens = db
         .prepare(`SELECT processo, COUNT(*) AS total FROM registros WHERE ${where} GROUP BY processo`)
@@ -544,6 +553,7 @@ router.get('/indicadores', autenticar, (req, res) => {
       });
       labels = [...SETORES_CANONICOS, 'Sem setor'];
       valores = [...SETORES_CANONICOS.map((s) => mapa[s] || 0), semSetor];
+      chaves = labels;
     } else {
       const registrosPorMes = db
         .prepare(`
@@ -562,6 +572,7 @@ router.get('/indicadores', autenticar, (req, res) => {
       registrosPorMes.forEach((registro) => {
         valores[registro.mes - 1] = registro.total;
       });
+      chaves = Array.from({ length: 12 }, (_, i) => i + 1);
     }
 
     const maiorValor = Math.max(...valores, 1);
@@ -575,6 +586,7 @@ router.get('/indicadores', autenticar, (req, res) => {
         labels,
         valores,
         alturas,
+        chaves,
       },
     });
   } catch (error) {
@@ -582,6 +594,53 @@ router.get('/indicadores', autenticar, (req, res) => {
     res.status(500).json({
       erro: 'Erro interno ao gerar indicadores.',
     });
+  }
+});
+
+/**
+ * GET /api/auth/indicadores/detalhe
+ * Lista os registros por trás de uma barra do gráfico de indicadores
+ * (mesmos filtros de período/cliente do /indicadores, mais o valor da
+ * barra clicada: mês em "periodo", tipo em "tipo", setor em "setor").
+ */
+router.get('/indicadores/detalhe', autenticar, (req, res) => {
+  try {
+    const { inicio, fim, clienteId, filtro, valor } = req.query;
+
+    if (valor === undefined || valor === '') {
+      return res.status(400).json({ erro: 'Informe o valor da barra selecionada.' });
+    }
+
+    const inicioFormatado = converterData(inicio);
+    const fimFormatado = converterData(fim);
+    const { filtros, parametros } = construirFiltroBase(inicioFormatado, fimFormatado, clienteId);
+
+    if (filtro === 'tipo') {
+      filtros.push('tipo = ?');
+      parametros.push(valor);
+    } else if (filtro === 'setor') {
+      if (valor === 'Sem setor') {
+        filtros.push(
+          `(processo IS NULL OR processo NOT IN (${SETORES_CANONICOS.map(() => '?').join(', ')}))`
+        );
+        parametros.push(...SETORES_CANONICOS);
+      } else {
+        filtros.push('processo = ?');
+        parametros.push(valor);
+      }
+    } else {
+      filtros.push('CAST(substr(data, 4, 2) AS INTEGER) = ?');
+      parametros.push(Number(valor));
+    }
+
+    const registros = db
+      .prepare(`SELECT * FROM registros WHERE ${filtros.join(' AND ')} ORDER BY id DESC`)
+      .all(...parametros);
+
+    res.json({ registros });
+  } catch (error) {
+    console.log('Erro ao buscar detalhe dos indicadores:', error);
+    res.status(500).json({ erro: 'Erro interno ao buscar o detalhe.' });
   }
 });
 
