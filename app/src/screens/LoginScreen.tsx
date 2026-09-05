@@ -95,26 +95,22 @@ export default function LoginScreen({ navigation }: Props) {
             )}
           </TouchableOpacity>
 
-          {/* Botão secundário: leva para a tela de cadastro */}
+          {/* Botão secundário: leva para a tela de ativação de acesso */}
           <TouchableOpacity
             style={styles.button}
-            onPress={() => navigation.navigate('Cadastro')}
+            onPress={() => navigation.navigate('PrimeiroAcesso')}
           >
-            <Text style={styles.buttonText}>Cadastrar</Text>
+            <Text style={styles.buttonText}>Primeiro acesso</Text>
           </TouchableOpacity>
 
           {/* Link "Esqueci minha senha" */}
-          <TouchableOpacity
-            onPress={() =>
-              alertar('Recuperar senha', 'Fluxo de recuperação de senha.')
-            }
-          >
+          <TouchableOpacity onPress={() => navigation.navigate('RecuperarSenha')}>
             <Text style={styles.forgotText}>Esqueci minha senha</Text>
           </TouchableOpacity>
 
           {/* Dica do usuário de teste (criado pelo seed do back-end) */}
           <Text style={styles.dica}>
-            Usuário de teste: carlos@setti.com / 123456
+            Usuário de teste: anselmosetti@gmail.com / 123456
           </Text>
         </ScrollView>
       </KeyboardAvoidingView>

@@ -17,28 +17,23 @@ import { colors } from '../theme/colors';
 import { AuthStackParamList } from '../navigation/types';
 import { useAuth } from '../context/AuthContext';
 import { alertar } from '../utils/alerta';
+import TermosModal from '../components/TermosModal';
 
-type Props = NativeStackScreenProps<AuthStackParamList, 'Cadastro'>;
+type Props = NativeStackScreenProps<AuthStackParamList, 'PrimeiroAcesso'>;
 
-export default function CadastroScreen({ navigation }: Props) {
-  const { cadastrar } = useAuth();
+export default function PrimeiroAcessoScreen({ navigation }: Props) {
+  const { ativarAcesso } = useAuth();
 
-  // Estados dos campos do formulário
   const [nome, setNome] = useState('');
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
-  const [confirmarSenha, setConfirmarSenha] = useState('');
   const [aceitouTermos, setAceitouTermos] = useState(false);
+  const [mostrarTermos, setMostrarTermos] = useState(false);
   const [carregando, setCarregando] = useState(false);
 
-  // Valida os dados e cria a conta na API
-  async function handleCriarConta() {
-    if (!nome || !email || !senha || !confirmarSenha) {
+  async function handleAtivar() {
+    if (!nome || !email || !senha) {
       alertar('Atenção', 'Preencha todos os campos.');
-      return;
-    }
-    if (senha !== confirmarSenha) {
-      alertar('Atenção', 'As senhas não conferem.');
       return;
     }
     if (!aceitouTermos) {
@@ -47,10 +42,10 @@ export default function CadastroScreen({ navigation }: Props) {
     }
     setCarregando(true);
     try {
-      await cadastrar(nome, email, senha);
-      // Cadastro bem-sucedido já faz login automático e entra no app.
+      await ativarAcesso(nome, email, senha);
+      // Ativação bem-sucedida já faz login automático e entra no app.
     } catch (e: any) {
-      alertar('Erro ao criar conta', e.message);
+      alertar('Erro ao ativar acesso', e.message);
     } finally {
       setCarregando(false);
     }
@@ -66,18 +61,17 @@ export default function CadastroScreen({ navigation }: Props) {
           contentContainerStyle={styles.content}
           keyboardShouldPersistTaps="handled"
         >
-          {/* Cabeçalho com botão de voltar e título */}
           <TouchableOpacity
             style={styles.backButton}
-            onPress={() => navigation.goBack()}
+            onPress={() => navigation.navigate('Login')}
           >
             <Text style={styles.backArrow}>←</Text>
           </TouchableOpacity>
 
-          <Text style={styles.title}>Criar conta</Text>
+          <Text style={styles.title}>Primeiro acesso</Text>
+          <Text style={styles.subtitle}>Ative o acesso criado pela empresa</Text>
 
-          {/* Nome completo */}
-          <Text style={styles.label}>Nome completo: <Text style={styles.obrigatorio}>*</Text></Text>
+          <Text style={styles.label}>Nome completo:</Text>
           <TextInput
             style={styles.input}
             placeholder="Digite seu nome completo"
@@ -86,8 +80,7 @@ export default function CadastroScreen({ navigation }: Props) {
             onChangeText={setNome}
           />
 
-          {/* E-mail */}
-          <Text style={styles.label}>E-mail: <Text style={styles.obrigatorio}>*</Text></Text>
+          <Text style={styles.label}>E-mail corporativo cadastrado pelo gestor:</Text>
           <TextInput
             style={styles.input}
             placeholder="Digite seu e-mail"
@@ -99,69 +92,54 @@ export default function CadastroScreen({ navigation }: Props) {
             onChangeText={setEmail}
           />
 
-          {/* Senha */}
-          <Text style={styles.label}>Senha: <Text style={styles.obrigatorio}>*</Text></Text>
+          <Text style={styles.label}>Digite a senha inicial:</Text>
           <TextInput
             style={styles.input}
-            placeholder="Criar uma senha"
+            placeholder="Digite sua senha"
             placeholderTextColor={colors.placeholder}
             secureTextEntry
             value={senha}
             onChangeText={setSenha}
           />
 
-          {/* Confirmar senha */}
-          <Text style={styles.label}>Confirmar senha <Text style={styles.obrigatorio}>*</Text></Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Digite sua senha novamente"
-            placeholderTextColor={colors.placeholder}
-            secureTextEntry
-            value={confirmarSenha}
-            onChangeText={setConfirmarSenha}
-          />
-
-          {/* Checkbox de aceite dos termos (feito manualmente com View) */}
           <TouchableOpacity
             style={styles.checkboxRow}
             onPress={() => setAceitouTermos((valor) => !valor)}
             activeOpacity={0.7}
           >
-            <View
-              style={[
-                styles.checkbox,
-                aceitouTermos && styles.checkboxMarcado,
-              ]}
-            >
+            <View style={[styles.checkbox, aceitouTermos && styles.checkboxMarcado]}>
               {aceitouTermos && <Text style={styles.checkboxCheck}>✓</Text>}
             </View>
             <Text style={styles.checkboxLabel}>
-              Li e aceito os Termos de Uso e a Política de Privacidade
+              Li e aceito os{' '}
+              <Text style={styles.checkboxLink} onPress={() => setMostrarTermos(true)}>
+                Termos de Uso e a Política de Privacidade
+              </Text>
             </Text>
           </TouchableOpacity>
 
-          {/* Botão Criar conta */}
           <TouchableOpacity
             style={styles.button}
-            onPress={handleCriarConta}
+            onPress={handleAtivar}
             disabled={carregando}
           >
             {carregando ? (
               <ActivityIndicator color={colors.textDark} />
             ) : (
-              <Text style={styles.buttonText}>Criar conta</Text>
+              <Text style={styles.buttonText}>Ativar acesso</Text>
             )}
           </TouchableOpacity>
 
-          {/* Link para voltar ao login */}
           <View style={styles.loginRow}>
-            <Text style={styles.loginText}>Já possui uma conta? </Text>
+            <Text style={styles.loginText}>Já ativou seu acesso? </Text>
             <TouchableOpacity onPress={() => navigation.navigate('Login')}>
               <Text style={styles.loginLink}>Entrar</Text>
             </TouchableOpacity>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
+
+      <TermosModal visivel={mostrarTermos} aoFechar={() => setMostrarTermos(false)} />
     </SafeAreaView>
   );
 }
@@ -193,10 +171,13 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: colors.textOnBlue,
     textAlign: 'center',
-    marginBottom: 24,
+    marginBottom: 4,
   },
-  obrigatorio: {
-    color: colors.danger,
+  subtitle: {
+    fontSize: 13,
+    color: 'rgba(255,255,255,0.8)',
+    textAlign: 'center',
+    marginBottom: 20,
   },
   label: {
     fontSize: 15,
@@ -215,7 +196,7 @@ const styles = StyleSheet.create({
   },
   checkboxRow: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     marginTop: 20,
   },
   checkbox: {
@@ -225,6 +206,7 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: colors.white,
     marginRight: 10,
+    marginTop: 2,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -240,6 +222,10 @@ const styles = StyleSheet.create({
     flex: 1,
     color: colors.textOnBlue,
     fontSize: 13,
+  },
+  checkboxLink: {
+    textDecorationLine: 'underline',
+    fontWeight: '700',
   },
   button: {
     backgroundColor: colors.white,

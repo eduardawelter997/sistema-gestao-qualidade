@@ -100,10 +100,24 @@ export function login(email: string, senha: string) {
   });
 }
 
-export function register(nome: string, email: string, senha: string) {
-  return request<{ token: string; usuario: Usuario }>('/api/auth/register', {
+export function ativarAcesso(nome: string, email: string, senha: string) {
+  return request<{ token: string; usuario: Usuario }>('/api/auth/ativar-acesso', {
     method: 'POST',
     body: JSON.stringify({ nome, email, senha }),
+  });
+}
+
+export function verificarCodigoRecuperacao(email: string, codigo: string) {
+  return request<{ valido: boolean }>('/api/auth/verificar-codigo', {
+    method: 'POST',
+    body: JSON.stringify({ email, codigo }),
+  });
+}
+
+export function redefinirSenhaComCodigo(email: string, codigo: string, novaSenha: string) {
+  return request<{ mensagem: string }>('/api/auth/redefinir-senha', {
+    method: 'POST',
+    body: JSON.stringify({ email, codigo, novaSenha }),
   });
 }
 
