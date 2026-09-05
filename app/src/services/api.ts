@@ -299,6 +299,7 @@ export interface IndicadoresResposta {
     labels: string[];
     valores: number[];
     alturas: number[];
+    chaves: (string | number)[];
   };
 }
 
@@ -320,5 +321,28 @@ export function buscarIndicadores(
 
   return request<IndicadoresResposta>(
     `/api/auth/indicadores?${params.toString()}`
+  );
+}
+
+export function buscarIndicadoresDetalhe(
+  inicio: string,
+  fim: string,
+  clienteId: number | null | undefined,
+  filtro: string,
+  valor: string | number
+) {
+  const params = new URLSearchParams({
+    inicio,
+    fim,
+    filtro,
+    valor: String(valor),
+  });
+
+  if (clienteId) {
+    params.append('clienteId', String(clienteId));
+  }
+
+  return request<{ registros: Registro[] }>(
+    `/api/auth/indicadores/detalhe?${params.toString()}`
   );
 }
