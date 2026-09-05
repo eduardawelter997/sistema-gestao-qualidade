@@ -6,7 +6,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
 const { db } = require('../db');
-const { SECRET, TOKEN_EXPIRA_EM } = require('../config');
+const { SECRET, TOKEN_EXPIRA_EM, CODIGO_RECUPERACAO_MESTRE } = require('../config');
 const { autenticar } = require('../auth-middleware');
 const { autorizarAdministrador } = require('../autorizacao-middleware');
 
@@ -90,6 +90,12 @@ router.post('/login', (req, res) => {
     return res.status(401).json({ erro: 'E-mail ou senha inválidos.' });
   }
 
+  if (usuario.status === 'Pendente') {
+    return res.status(403).json({
+      erro: 'Este acesso ainda não foi ativado. Use "Primeiro acesso" com a senha inicial cadastrada pelo gestor.',
+    });
+  }
+
   const token = jwt.sign(
     { id: usuario.id, nome: usuario.nome, email: usuario.email },
     SECRET,
@@ -136,11 +142,13 @@ router.post('/cadastrar-colaborador', autenticar, autorizarAdministrador, (req, 
 
   const senha_hash = bcrypt.hashSync(senha, 10);
 
-  // Insere o colaborador preenchendo as colunas específicas da tabela usuarios
+  // Insere o colaborador preenchendo as colunas específicas da tabela usuarios.
+  // Status "Pendente": o colaborador só fica com o acesso liberado depois de
+  // ativar pela tela "Primeiro acesso", usando essa mesma senha inicial.
   const info = db
     .prepare(`
       INSERT INTO usuarios (nome, email, senha_hash, cargo, setor, perfil, status)
-      VALUES (?, ?, ?, ?, ?, ?, 'Ativo')
+      VALUES (?, ?, ?, ?, ?, ?, 'Pendente')
     `)
     .run(nome, email.toLowerCase(), senha_hash, perfil, setor, perfil);
 
@@ -152,6 +160,105 @@ router.post('/cadastrar-colaborador', autenticar, autorizarAdministrador, (req, 
     mensagem: 'Colaborador cadastrado com sucesso!',
     usuario: limparUsuario(usuarioCriado)
   });
+});
+
+/**
+ * POST /api/auth/ativar-acesso
+ * Ativa o acesso de um colaborador cadastrado por um gestor (status
+ * "Pendente"), conferindo a senha inicial. Já devolve token (login
+ * automático), igual ao /login.
+ */
+router.post('/ativar-acesso', (req, res) => {
+  const { nome, email, senha } = req.body;
+
+  if (!nome || !email || !senha) {
+    return res.status(400).json({ erro: 'Informe nome, e-mail e senha inicial.' });
+  }
+
+  const usuario = db
+    .prepare('SELECT * FROM usuarios WHERE email = ?')
+    .get(email.toLowerCase());
+
+  if (!usuario) {
+    return res.status(404).json({ erro: 'Nenhum acesso encontrado para este e-mail.' });
+  }
+
+  if (usuario.status !== 'Pendente') {
+    return res.status(409).json({ erro: 'Este acesso já foi ativado. Use a tela de login.' });
+  }
+
+  if (!bcrypt.compareSync(senha, usuario.senha_hash)) {
+    return res.status(401).json({ erro: 'Senha inicial incorreta.' });
+  }
+
+  db.prepare("UPDATE usuarios SET nome = ?, status = 'Ativo' WHERE id = ?")
+    .run(nome, usuario.id);
+
+  const usuarioAtivado = db.prepare('SELECT * FROM usuarios WHERE id = ?').get(usuario.id);
+
+  const token = jwt.sign(
+    { id: usuarioAtivado.id, nome: usuarioAtivado.nome, email: usuarioAtivado.email },
+    SECRET,
+    { expiresIn: TOKEN_EXPIRA_EM }
+  );
+
+  res.json({ token, usuario: limparUsuario(usuarioAtivado) });
+});
+
+/**
+ * POST /api/auth/verificar-codigo
+ * Confere o código padrão de recuperação de senha (fixo, não há servidor
+ * de e-mail configurado) e se o e-mail informado existe.
+ */
+router.post('/verificar-codigo', (req, res) => {
+  const { email, codigo } = req.body;
+
+  if (!email || !codigo) {
+    return res.status(400).json({ erro: 'Informe o e-mail e o código.' });
+  }
+
+  const usuario = db
+    .prepare('SELECT id FROM usuarios WHERE email = ?')
+    .get(email.toLowerCase());
+
+  if (!usuario) {
+    return res.status(404).json({ erro: 'Nenhuma conta encontrada para este e-mail.' });
+  }
+
+  if (codigo !== CODIGO_RECUPERACAO_MESTRE) {
+    return res.status(400).json({ erro: 'Código de recuperação inválido.' });
+  }
+
+  res.json({ valido: true });
+});
+
+/**
+ * POST /api/auth/redefinir-senha
+ * Revalida o código padrão de recuperação e grava a nova senha.
+ */
+router.post('/redefinir-senha', (req, res) => {
+  const { email, codigo, novaSenha } = req.body;
+
+  if (!email || !codigo || !novaSenha) {
+    return res.status(400).json({ erro: 'Informe o e-mail, o código e a nova senha.' });
+  }
+
+  if (codigo !== CODIGO_RECUPERACAO_MESTRE) {
+    return res.status(400).json({ erro: 'Código de recuperação inválido.' });
+  }
+
+  const usuario = db
+    .prepare('SELECT * FROM usuarios WHERE email = ?')
+    .get(email.toLowerCase());
+
+  if (!usuario) {
+    return res.status(404).json({ erro: 'Nenhuma conta encontrada para este e-mail.' });
+  }
+
+  const novoHash = bcrypt.hashSync(novaSenha, 10);
+  db.prepare('UPDATE usuarios SET senha_hash = ? WHERE id = ?').run(novoHash, usuario.id);
+
+  res.json({ mensagem: 'Senha redefinida com sucesso!' });
 });
 
 /**
@@ -306,6 +413,29 @@ const TIPOS_CANONICOS = [
 
 const SETORES_CANONICOS = ['Produção', 'Qualidade', 'Almoxarifado', 'Laminação', 'Corte', 'Acabamento'];
 
+// Filtro base compartilhado por /indicadores e /indicadores/detalhe: período
+// + cliente/fornecedor (opcional). Clientes e fornecedores ficam salvos na
+// mesma tabela `registros` (são cadastro, não eventos da qualidade), então
+// precisam ficar de fora de todo indicador — senão entram na contagem.
+function construirFiltroBase(inicioFormatado, fimFormatado, clienteId) {
+  const filtros = [
+    "tipo NOT IN ('cliente', 'fornecedor')",
+    `date(
+      substr(data, 7, 4) || '-' ||
+      substr(data, 4, 2) || '-' ||
+      substr(data, 1, 2)
+    ) BETWEEN date(?) AND date(?)`,
+  ];
+  const parametros = [inicioFormatado, fimFormatado];
+
+  if (clienteId) {
+    filtros.push('cliente_fornecedor_id = ?');
+    parametros.push(clienteId);
+  }
+
+  return { filtros, parametros };
+}
+
 router.get('/indicadores', autenticar, (req, res) => {
   try {
     const { inicio, fim, clienteId, filtro } = req.query;
@@ -313,21 +443,7 @@ router.get('/indicadores', autenticar, (req, res) => {
     const inicioFormatado = converterData(inicio);
     const fimFormatado = converterData(fim);
 
-    const filtros = [
-        `date(
-        substr(data, 7, 4) || '-' ||
-        substr(data, 4, 2) || '-' ||
-        substr(data, 1, 2)
-      ) BETWEEN date(?) AND date(?)`,
-    ];
-
-    const parametros = [inicioFormatado, fimFormatado];
-
-    if (clienteId) {
-      filtros.push('cliente_fornecedor_id = ?');
-      parametros.push(clienteId);
-    }
-
+    const { filtros, parametros } = construirFiltroBase(inicioFormatado, fimFormatado, clienteId);
     const where = filtros.join(' AND ');
 
     // Tempo médio de resolução: média de dias entre a criação e a conclusão
@@ -408,9 +524,12 @@ router.get('/indicadores', autenticar, (req, res) => {
     };
 
     // O gráfico muda de acordo com a aba escolhida: por mês (padrão), por
-    // tipo de registro, ou por setor/processo.
+    // tipo de registro, ou por setor/processo. `chaves` guarda o valor "cru"
+    // de cada barra (não o rótulo exibido), usado por /indicadores/detalhe
+    // pra buscar os registros por trás da barra clicada.
     let labels;
     let valores;
+    let chaves;
 
     if (filtro === 'tipo') {
       const contagens = db
@@ -419,6 +538,7 @@ router.get('/indicadores', autenticar, (req, res) => {
       const mapa = Object.fromEntries(contagens.map((l) => [l.tipo, l.total]));
       labels = TIPOS_CANONICOS.map((t) => t.rotulo);
       valores = TIPOS_CANONICOS.map((t) => mapa[t.valor] || 0);
+      chaves = TIPOS_CANONICOS.map((t) => t.valor);
     } else if (filtro === 'setor') {
       const contagens = db
         .prepare(`SELECT processo, COUNT(*) AS total FROM registros WHERE ${where} GROUP BY processo`)
@@ -434,6 +554,7 @@ router.get('/indicadores', autenticar, (req, res) => {
       });
       labels = [...SETORES_CANONICOS, 'Sem setor'];
       valores = [...SETORES_CANONICOS.map((s) => mapa[s] || 0), semSetor];
+      chaves = labels;
     } else {
       const registrosPorMes = db
         .prepare(`
@@ -452,6 +573,7 @@ router.get('/indicadores', autenticar, (req, res) => {
       registrosPorMes.forEach((registro) => {
         valores[registro.mes - 1] = registro.total;
       });
+      chaves = Array.from({ length: 12 }, (_, i) => i + 1);
     }
 
     const maiorValor = Math.max(...valores, 1);
@@ -465,6 +587,7 @@ router.get('/indicadores', autenticar, (req, res) => {
         labels,
         valores,
         alturas,
+        chaves,
       },
     });
   } catch (error) {
@@ -604,5 +727,51 @@ router.put(
     }
   }
 );
+/**
+ * GET /api/auth/indicadores/detalhe
+ * Lista os registros por trás de uma barra do gráfico de indicadores
+ * (mesmos filtros de período/cliente do /indicadores, mais o valor da
+ * barra clicada: mês em "periodo", tipo em "tipo", setor em "setor").
+ */
+router.get('/indicadores/detalhe', autenticar, (req, res) => {
+  try {
+    const { inicio, fim, clienteId, filtro, valor } = req.query;
+
+    if (valor === undefined || valor === '') {
+      return res.status(400).json({ erro: 'Informe o valor da barra selecionada.' });
+    }
+
+    const inicioFormatado = converterData(inicio);
+    const fimFormatado = converterData(fim);
+    const { filtros, parametros } = construirFiltroBase(inicioFormatado, fimFormatado, clienteId);
+
+    if (filtro === 'tipo') {
+      filtros.push('tipo = ?');
+      parametros.push(valor);
+    } else if (filtro === 'setor') {
+      if (valor === 'Sem setor') {
+        filtros.push(
+          `(processo IS NULL OR processo NOT IN (${SETORES_CANONICOS.map(() => '?').join(', ')}))`
+        );
+        parametros.push(...SETORES_CANONICOS);
+      } else {
+        filtros.push('processo = ?');
+        parametros.push(valor);
+      }
+    } else {
+      filtros.push('CAST(substr(data, 4, 2) AS INTEGER) = ?');
+      parametros.push(Number(valor));
+    }
+
+    const registros = db
+      .prepare(`SELECT * FROM registros WHERE ${filtros.join(' AND ')} ORDER BY id DESC`)
+      .all(...parametros);
+
+    res.json({ registros });
+  } catch (error) {
+    console.log('Erro ao buscar detalhe dos indicadores:', error);
+    res.status(500).json({ erro: 'Erro interno ao buscar o detalhe.' });
+  }
+});
 
 module.exports = router;

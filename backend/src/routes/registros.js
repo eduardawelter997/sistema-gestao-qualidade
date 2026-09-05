@@ -33,8 +33,12 @@ router.get('/dashboard', (req, res) => {
     aguardandoAvaliacao: contar("WHERE status = 'Aguardando avaliação'"),
   };
 
+  // Clientes/fornecedores são cadastro, não eventos da qualidade — não
+  // entram nos registros recentes da tela Início.
   const recentes = db
-    .prepare('SELECT * FROM registros WHERE op_id IS NULL ORDER BY id DESC LIMIT 5')
+    .prepare(
+      "SELECT * FROM registros WHERE op_id IS NULL AND tipo NOT IN ('cliente', 'fornecedor') ORDER BY id DESC LIMIT 5"
+    )
     .all();
 
   res.json({ overview, recentes });
@@ -52,6 +56,10 @@ router.get('/registros', (req, res) => {
   if (tipo && tipo !== 'todos') {
     where.push('tipo = ?');
     params.push(tipo);
+  } else {
+    // "Todos" na Busca são os registros da qualidade — clientes/fornecedores
+    // são cadastro, não aparecem misturados na busca geral.
+    where.push("tipo NOT IN ('cliente', 'fornecedor')");
   }
   if (q) {
     where.push('(codigo LIKE ? OR titulo LIKE ? OR descricao LIKE ?)');
@@ -74,7 +82,9 @@ router.get('/registros', (req, res) => {
  */
 router.get('/registros/favoritos', (req, res) => {
   const registros = db
-    .prepare('SELECT * FROM registros WHERE favorito = 1 AND op_id IS NULL ORDER BY id DESC')
+    .prepare(
+      "SELECT * FROM registros WHERE favorito = 1 AND op_id IS NULL AND tipo NOT IN ('cliente', 'fornecedor') ORDER BY id DESC"
+    )
     .all();
   res.json({ registros });
 });

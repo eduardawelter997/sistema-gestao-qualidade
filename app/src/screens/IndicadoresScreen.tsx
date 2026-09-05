@@ -7,16 +7,28 @@ import {
   TextInput,
   TouchableOpacity,
   ActivityIndicator,
-  Alert,
+  Modal,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import Header from '../components/Header';
+import StatusBadge from '../components/StatusBadge';
 import { colors } from '../theme/colors';
 import {
   listarClientesFornecedores,
   buscarIndicadores,
+  buscarIndicadoresDetalhe,
+  Registro,
 } from '../services/api';
+import { abrirDetalhe, temTelaDeDetalhe } from '../navigation/navegarDetalhe';
+import { alertar } from '../utils/alerta';
+
+const rotuloTipo: Record<string, string> = {
+  op: 'Ordem de Produção',
+  ocorrencia: 'Ocorrência',
+  acao: 'Ação Corretiva',
+  recebimento: 'Recebimento',
+};
 
 
 
@@ -44,11 +56,23 @@ export default function IndicadoresScreen() {
     taxaNaoConformidade: 0,
     tempoMedio: 'Sem dados',
   });
-  const [dadosGrafico, setDadosGrafico] = useState({
+  const [dadosGrafico, setDadosGrafico] = useState<{
+    labels: string[];
+    valores: number[];
+    alturas: number[];
+    chaves: (string | number)[];
+  }>({
     labels: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'],
     valores: Array(12).fill(0),
     alturas: Array(12).fill(4),
+    chaves: Array.from({ length: 12 }, (_, i) => i + 1),
   });
+
+  // Modal com a lista de registros por trás da barra clicada
+  const [modalVisivel, setModalVisivel] = useState(false);
+  const [tituloModal, setTituloModal] = useState('');
+  const [registrosModal, setRegistrosModal] = useState<Registro[]>([]);
+  const [carregandoModal, setCarregandoModal] = useState(false);
 
   useEffect(() => {
     carregarClientesCadastrados();
@@ -86,6 +110,34 @@ export default function IndicadoresScreen() {
     setCarregando(false);
   }
 };
+
+  const abrirDetalheBarra = async (index: number) => {
+    if (!dadosGrafico.valores[index]) return; // barra vazia, nada pra mostrar
+
+    setTituloModal(dadosGrafico.labels[index]);
+    setModalVisivel(true);
+    setCarregandoModal(true);
+    setRegistrosModal([]);
+    try {
+      const { registros } = await buscarIndicadoresDetalhe(
+        dataInicio,
+        dataFim,
+        clienteSelecionadoId ? Number(clienteSelecionadoId) : null,
+        abaAtiva,
+        dadosGrafico.chaves[index]
+      );
+      setRegistrosModal(registros);
+    } catch (error: any) {
+      alertar('Erro', error.message || 'Não foi possível carregar os registros.');
+    } finally {
+      setCarregandoModal(false);
+    }
+  };
+
+  const handleAbrirRegistro = (registro: Registro) => {
+    setModalVisivel(false);
+    abrirDetalhe(navigation, registro);
+  };
 
   return (
     <View style={styles.container}>
@@ -221,13 +273,18 @@ export default function IndicadoresScreen() {
           ) : (
             <View style={styles.graficoBarrasContainer}>
               {dadosGrafico.labels.map((rotulo, index) => (
-                <View key={rotulo} style={styles.colunaBarra}>
+                <TouchableOpacity
+                  key={rotulo}
+                  style={styles.colunaBarra}
+                  activeOpacity={0.7}
+                  onPress={() => abrirDetalheBarra(index)}
+                >
                   <Text style={styles.valorBarra}>{dadosGrafico.valores[index]}</Text>
                   <View style={[styles.barraPreenchida, { height: dadosGrafico.alturas[index] }]} />
                   <Text style={styles.legendaBarra} numberOfLines={1}>
                     {rotulo}
                   </Text>
-                </View>
+                </TouchableOpacity>
               ))}
             </View>
           )}
@@ -273,6 +330,56 @@ export default function IndicadoresScreen() {
         </View>
 
       </ScrollView>
+
+      <Modal
+        visible={modalVisivel}
+        animationType="slide"
+        transparent
+        onRequestClose={() => setModalVisivel(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitulo}>Registros — {tituloModal}</Text>
+              <TouchableOpacity onPress={() => setModalVisivel(false)} hitSlop={8}>
+                <Ionicons name="close" size={22} color={colors.textSecondary} />
+              </TouchableOpacity>
+            </View>
+
+            {carregandoModal ? (
+              <ActivityIndicator size="small" color={colors.primary} style={{ marginVertical: 30 }} />
+            ) : registrosModal.length === 0 ? (
+              <Text style={styles.modalVazio}>Nenhum registro encontrado.</Text>
+            ) : (
+              <ScrollView style={{ maxHeight: 420 }}>
+                {registrosModal.map((registro) => {
+                  const tocavel = temTelaDeDetalhe(registro.tipo);
+                  return (
+                    <TouchableOpacity
+                      key={registro.id}
+                      style={styles.modalItem}
+                      activeOpacity={tocavel ? 0.7 : 1}
+                      disabled={!tocavel}
+                      onPress={() => handleAbrirRegistro(registro)}
+                    >
+                      <View style={styles.modalItemTopo}>
+                        <Text style={styles.modalItemCodigo}>{registro.codigo}</Text>
+                        <StatusBadge status={registro.status} />
+                      </View>
+                      <Text style={styles.modalItemTitulo} numberOfLines={1}>
+                        {registro.titulo}
+                      </Text>
+                      <Text style={styles.modalItemSubtitulo} numberOfLines={1}>
+                        {rotuloTipo[registro.tipo] || registro.tipo} · {registro.data}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </ScrollView>
+            )}
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -334,4 +441,65 @@ const styles = StyleSheet.create({
   cardResumoLabel: { fontSize: 11, color: colors.textSecondary, marginBottom: 6 },
   cardResumoValor: { fontSize: 18, fontWeight: 'bold' },
   tipoTexto: { color: colors.textSecondary, fontSize: 11 },
+
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalContainer: {
+    backgroundColor: '#FFF',
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+    padding: 20,
+    maxHeight: '80%',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+  },
+  modalTitulo: {
+    flex: 1,
+    fontSize: 16,
+    fontWeight: '700',
+    color: colors.primary,
+    marginRight: 12,
+  },
+  modalVazio: {
+    textAlign: 'center',
+    color: colors.textSecondary,
+    fontSize: 13,
+    marginVertical: 30,
+  },
+  modalItem: {
+    backgroundColor: colors.cardBg,
+    borderRadius: 10,
+    padding: 14,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  modalItemTopo: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  modalItemCodigo: {
+    color: colors.primary,
+    fontWeight: '700',
+    fontSize: 13,
+  },
+  modalItemTitulo: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: colors.textPrimary,
+  },
+  modalItemSubtitulo: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    marginTop: 2,
+  },
 });

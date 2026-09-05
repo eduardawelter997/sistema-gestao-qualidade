@@ -113,6 +113,7 @@ export default function GestaoColaboradoresScreen() {
               : 'US';
 
             const isInativo = colaborador.status === 'Inativo'; // 👈 Identifica se está inativo
+            const isPendente = colaborador.status === 'Pendente'; // Ainda não ativou o acesso
 
             return (
               <View key={colaborador.id} style={styles.cardColaborador}>
@@ -132,11 +133,13 @@ export default function GestaoColaboradoresScreen() {
                 <View style={styles.direitaCard}>
                   <View style={[
                     styles.statusBadge,
-                    isInativo && styles.statusBadgeInativo
+                    isInativo && styles.statusBadgeInativo,
+                    isPendente && styles.statusBadgePendente,
                   ]}>
                     <Text style={[
                       styles.statusTexto,
-                      isInativo && styles.statusTextoInativo
+                      isInativo && styles.statusTextoInativo,
+                      isPendente && styles.statusTextoPendente,
                     ]}>
                       {colaborador.status || 'Ativo'}
                     </Text>
@@ -275,5 +278,11 @@ const styles = StyleSheet.create({
   },
   statusTextoInativo: {
     color: '#C5221F', // Texto vermelho escuro para inativo
+  },
+  statusBadgePendente: {
+    backgroundColor: '#FDECC8', // Âmbar: ainda não ativou o acesso
+  },
+  statusTextoPendente: {
+    color: '#9A6700',
   },
 });
