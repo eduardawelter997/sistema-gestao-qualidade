@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -13,6 +13,7 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { colors } from '../theme/colors';
 import { API_URL } from '../config/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useAuth } from '../context/AuthContext';
 
 export default function DetalhesColaboradorScreen() {
   const navigation = useNavigation<any>();
@@ -20,6 +21,16 @@ export default function DetalhesColaboradorScreen() {
 
   // Recebe os dados do colaborador passados pela lista
   const { colaborador } = route.params || {};
+  const { usuario, carregando: carregandoUsuario } = useAuth();
+
+    const autorizado =
+      usuario?.perfil?.toLowerCase() === 'administrador';
+
+    useEffect(() => {
+      if (!carregandoUsuario && !autorizado) {
+        navigation.navigate('Mais');
+      }
+    }, [carregandoUsuario, autorizado, navigation]);
 
   // Estado para controlar se o colaborador está ativo ou inativo na tela de detalhes
   const [statusAtual, setStatusAtual] = useState(colaborador?.status || 'Ativo');
@@ -28,7 +39,7 @@ export default function DetalhesColaboradorScreen() {
   // Estados dos seletores
   const [perfil, setPerfil] = useState(colaborador?.perfil || 'Gestor');
   const [mostrarListaPerfil, setMostrarListaPerfil] = useState(false);
-  const perfisDisponiveis = ['Gestor da Qualidade', 'Gestor', 'Almoxarife', 'Administrativo'];
+  const perfisDisponiveis = ['Gestor da Qualidade', 'Gestor', 'Almoxarife', 'Administrativo', 'Administrador',];
 
   const [setor, setSetor] = useState(colaborador?.setor || 'Desenvolvimento');
   const [mostrarListaSetor, setMostrarListaSetor] = useState(false);
@@ -54,17 +65,84 @@ export default function DetalhesColaboradorScreen() {
     avaliarEficacia: false,
   });
 
+  const [carregandoPermissoes, setCarregandoPermissoes] = useState(true);
+
   const alternarPermissao = (chave: keyof typeof permissoes) => {
     setPermissoes(prev => ({ ...prev, [chave]: !prev[chave] }));
   };
+
+  useEffect(() => {
+    async function carregarPermissoes() {
+      try {
+        const token = await AsyncStorage.getItem('@gestao_qualidade:token');
+
+        const resposta = await fetch(
+          `${API_URL}/api/auth/permissoes/${colaborador?.id}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        const dados = await resposta.json();
+
+        if (!resposta.ok) {
+          throw new Error(dados.erro || 'Não foi possível carregar as permissões.');
+        }
+
+        setPermissoes(dados.permissoes);
+      } catch (error) {
+        console.log('Erro ao carregar permissões:', error);
+        Alert.alert('Erro', 'Não foi possível carregar as permissões.');
+      } finally {
+        setCarregandoPermissoes(false);
+      }
+    }
+
+    if (carregandoUsuario || !autorizado) {
+      return;
+    }
+
+    if (colaborador?.id) {
+      carregarPermissoes();
+    } else {
+      setCarregandoPermissoes(false);
+    }
+  }, [colaborador?.id, carregandoUsuario, autorizado]);
 
   const iniciais = colaborador?.nome
     ? colaborador.nome.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()
     : 'MS';
 
-  const handleSalvar = () => {
-    Alert.alert('Sucesso', 'Alterações salvas com sucesso!');
-    navigation.goBack();
+  const handleSalvar = async () => {
+    try {
+      const token = await AsyncStorage.getItem('@gestao_qualidade:token');
+
+      const resposta = await fetch(
+        `${API_URL}/api/auth/permissoes/${colaborador?.id}`,
+        {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(permissoes),
+        }
+      );
+
+      const dados = await resposta.json();
+
+      if (!resposta.ok) {
+        throw new Error(dados.erro || 'Não foi possível salvar as permissões.');
+      }
+
+      Alert.alert('Sucesso', 'Permissões salvas com sucesso!');
+      navigation.goBack();
+    } catch (error) {
+      console.log('Erro ao salvar permissões:', error);
+      Alert.alert('Erro', 'Não foi possível salvar as permissões.');
+    }
   };
 
   const handleDesativar = async () => {
@@ -150,6 +228,10 @@ export default function DetalhesColaboradorScreen() {
     }
   };
 
+  if (carregandoUsuario || !autorizado) {
+    return null;
+  }
+
   return (
     <View style={styles.container}>
       {/* Cabeçalho superior */}
@@ -179,7 +261,12 @@ export default function DetalhesColaboradorScreen() {
             <View style={{ flex: 1 }}>
               <Text style={styles.textoLabelCard}>Nome: <Text style={styles.textoValorCard}>{colaborador?.nome || 'Mariana Souza'}</Text></Text>
               <Text style={styles.textoLabelCard}>E-mail: <Text style={styles.textoValorCard}>{colaborador?.email || 'mariana.souza@gruposetti.com.br'}</Text></Text>
-              <Text style={styles.textoLabelCard}>Status: <Text style={styles.statusVerde}>{colaborador?.status || 'Ativo'}</Text></Text>
+              <Text style={styles.textoLabelCard}>
+                Status:{' '}
+                <Text style={styles.statusVerde}>
+                  {statusAtual}
+                </Text>
+              </Text>
             </View>
           </View>
         </View>
@@ -255,8 +342,9 @@ export default function DetalhesColaboradorScreen() {
             <View key={idx} style={styles.linhaPermissao}>
               <Text style={styles.permissaoTexto}>{item.label}</Text>
               <Switch
+                disabled={carregandoPermissoes}
                 trackColor={{ false: '#D9D9D9', true: colors.primary }}
-                thumbColor={'#FFF'}
+                thumbColor="#FFF"
                 ios_backgroundColor="#D9D9D9"
                 onValueChange={() => alternarPermissao(item.chave as any)}
                 value={permissoes[item.chave as keyof typeof permissoes]}
@@ -266,8 +354,10 @@ export default function DetalhesColaboradorScreen() {
         </View>
 
         {/* Botão Salvar alterações */}
-        <TouchableOpacity style={styles.botaoSalvar} activeOpacity={0.8} onPress={handleSalvar}>
-          <Text style={styles.botaoSalvarTexto}>Salvar alterações</Text>
+        <TouchableOpacity style={styles.botaoSalvar} activeOpacity={0.8} onPress={handleSalvar} disabled={carregandoPermissoes}>
+          <Text style={styles.botaoSalvarTexto}>
+            {carregandoPermissoes ? 'Carregando permissões...' : 'Salvar alterações'}
+          </Text>
         </TouchableOpacity>
 
         {/* Botão Desativar colaborador */}

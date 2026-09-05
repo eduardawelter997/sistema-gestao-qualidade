@@ -8,6 +8,10 @@ const express = require('express');
 const { db } = require('../db');
 const { autenticar } = require('../auth-middleware');
 const { upload, uploadsDir } = require('../upload');
+const {
+  exigirPermissao,
+  usuarioTemPermissao,
+} = require('../permissao-middleware');
 
 const router = express.Router();
 
@@ -117,8 +121,51 @@ router.patch('/registros/:id', (req, res) => {
     tipo, titulo, descricao, status, responsavel, produto, processo, data,
     lote, quantidade, disposicao, origem, metodoAnalise, analiseCausa,
     opRelacionadaId, ocorrenciaRelacionadaId, clienteFornecedorId,
-    notaFiscal, comProblema,
+    notaFiscal, comProblema, avaliacaoEficacia,
   } = req.body;
+
+  const tipoFinal = tipo ?? existente.tipo;
+
+    if (
+      analiseCausa !== undefined &&
+      analiseCausa !== existente.analise_causa &&
+      !usuarioTemPermissao(req.usuario.id, 'definir_causa_raiz')
+    ) {
+      return res.status(403).json({
+        erro: 'Você não possui permissão para definir a causa raiz.',
+      });
+    }
+
+    if (
+      tipoFinal === 'acao' &&
+      status === 'Concluído' &&
+      existente.status !== 'Concluído' &&
+      !usuarioTemPermissao(req.usuario.id, 'encerrar_acoes')
+    ) {
+      return res.status(403).json({
+        erro: 'Você não possui permissão para encerrar ações corretivas.',
+      });
+    }
+
+    if (
+      avaliacaoEficacia !== undefined &&
+      avaliacaoEficacia !== existente.avaliacao_eficacia &&
+      !usuarioTemPermissao(req.usuario.id, 'avaliar_eficacia')
+    ) {
+      return res.status(403).json({
+        erro: 'Você não possui permissão para avaliar a eficácia.',
+      });
+    }
+    if (
+      tipoFinal === 'recebimento' &&
+      comProblema !== undefined &&
+      Boolean(comProblema) !== Boolean(existente.com_problema) &&
+      !usuarioTemPermissao(req.usuario.id, 'registrar_problemas')
+    ) {
+      return res.status(403).json({
+        erro: 'Você não possui permissão para registrar problemas no recebimento.',
+      });
+    }
 
   const statusFinal = status ?? existente.status;
   // Marca a data de conclusão na primeira vez que o status vira "Concluído"
@@ -133,7 +180,7 @@ router.patch('/registros/:id', (req, res) => {
       tipo = ?, titulo = ?, descricao = ?, status = ?, responsavel = ?, produto = ?, processo = ?, data = ?,
       lote = ?, quantidade = ?, disposicao = ?, origem = ?, metodo_analise = ?, analise_causa = ?,
       op_relacionada_id = ?, ocorrencia_relacionada_id = ?, cliente_fornecedor_id = ?,
-      nota_fiscal = ?, com_problema = ?, concluido_em = ?
+      nota_fiscal = ?, com_problema = ?, avaliacao_eficacia = ?, concluido_em = ?
      WHERE id = ?`
   ).run(
     tipo ?? existente.tipo,
@@ -155,6 +202,9 @@ router.patch('/registros/:id', (req, res) => {
     clienteFornecedorId !== undefined ? clienteFornecedorId : existente.cliente_fornecedor_id,
     notaFiscal ?? existente.nota_fiscal,
     comProblema !== undefined ? (comProblema ? 1 : 0) : existente.com_problema,
+    avaliacaoEficacia !== undefined
+      ? avaliacaoEficacia
+      : existente.avaliacao_eficacia,
     concluidoEm,
     id
   );
@@ -172,12 +222,48 @@ router.post('/registros', (req, res) => {
     notaFiscal, comProblema,
   } = req.body;
 
+  
+
   if (!titulo) {
     return res.status(400).json({ erro: 'O título/nome é obrigatório.' });
   }
 
   try {
     const tipoFinal = tipo || 'op';
+    if (
+      (tipoFinal === 'cliente' || tipoFinal === 'fornecedor') &&
+      !usuarioTemPermissao(req.usuario.id, 'cadastrar_clientes')
+    ) {
+      return res.status(403).json({
+        erro: 'Você não possui permissão para cadastrar clientes ou fornecedores.',
+      });
+    }
+    if (
+      tipoFinal === 'recebimento' &&
+      !usuarioTemPermissao(req.usuario.id, 'registrar_recebimentos')
+    ) {
+      return res.status(403).json({
+        erro: 'Você não possui permissão para registrar recebimentos.',
+      });
+    }
+    if (
+      tipoFinal === 'recebimento' &&
+      comProblema === true &&
+      !usuarioTemPermissao(req.usuario.id, 'registrar_problemas')
+    ) {
+      return res.status(403).json({
+        erro: 'Você não possui permissão para registrar problemas no recebimento.',
+      });
+    }
+    if (
+      tipoFinal === 'acao' &&
+      analiseCausa &&
+      !usuarioTemPermissao(req.usuario.id, 'definir_causa_raiz')
+    ) {
+      return res.status(403).json({
+        erro: 'Você não possui permissão para definir a causa raiz.',
+      });
+    }
     const prefixo = PREFIXOS_CODIGO[tipoFinal] || 'REG';
     const codigoGerado =
       codigo || `${prefixo}-${new Date().getFullYear()}-${Date.now().toString().slice(-6)}`;
@@ -261,7 +347,7 @@ router.get('/usuarios', (req, res) => {
  * POST /api/registros/:id/anexos
  * Recebe um arquivo (foto/documento) e associa ao registro.
  */
-router.post('/registros/:id/anexos', (req, res) => {
+router.post('/registros/:id/anexos', exigirPermissao('adicionar_fotos'), (req, res) => {
   upload.single('arquivo')(req, res, (erroUpload) => {
     if (erroUpload) {
       return res.status(400).json({ erro: erroUpload.message });
@@ -311,7 +397,7 @@ router.get('/registros/:id/anexos', (req, res) => {
  * DELETE /api/anexos/:id
  * Remove um anexo (registro no banco + arquivo em disco).
  */
-router.delete('/anexos/:id', (req, res) => {
+router.delete('/anexos/:id', exigirPermissao('adicionar_fotos'), (req, res) => {
   const anexo = db.prepare('SELECT * FROM anexos WHERE id = ?').get(req.params.id);
   if (!anexo) {
     return res.status(404).json({ erro: 'Anexo não encontrado.' });

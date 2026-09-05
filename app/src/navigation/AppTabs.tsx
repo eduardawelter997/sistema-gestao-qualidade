@@ -212,6 +212,7 @@ export default function AppTabs() {
         component={IndicadoresScreen} 
         options={{ tabBarButton: () => null, headerShown: false }} 
       />
+      
     </Tab.Navigator>
   );
 }

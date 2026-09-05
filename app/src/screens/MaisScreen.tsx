@@ -47,6 +47,8 @@ function ItemMenu({
 export default function MaisScreen() {
   const navigation = useNavigation<any>();
   const { usuario, sair } = useAuth();
+  const podeGerenciarColaboradores =
+  usuario?.perfil?.toLowerCase() === 'administrador';
 
   const emBreve = () =>
     alertar('Em breve', 'Esta tela será desenvolvida nas próximas etapas.');
@@ -78,7 +80,12 @@ export default function MaisScreen() {
         {/* Gestão */}
         <Text style={styles.secao}>Gestão</Text>
         <View style={styles.grupo}>
-          <ItemMenu texto="Gestão de colaboradores" onPress={() => navigation.navigate('GestaoColaboradores')} />
+          {podeGerenciarColaboradores && (
+          <ItemMenu
+            texto="Gestão de colaboradores"
+            onPress={() => navigation.navigate('GestaoColaboradores')}
+          />
+          )}
           <ItemMenu texto="Indicadores gerenciais" onPress={() => navigation.navigate('Indicadores')} />
           <ItemMenu texto="Cliente e fornecedores" onPress={() => navigation.navigate('ClientesFornecedores')} />
         </View>
