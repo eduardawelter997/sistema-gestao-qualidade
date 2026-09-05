@@ -8,6 +8,7 @@ const jwt = require('jsonwebtoken');
 const { db } = require('../db');
 const { SECRET, TOKEN_EXPIRA_EM, CODIGO_RECUPERACAO_MESTRE } = require('../config');
 const { autenticar } = require('../auth-middleware');
+const { autorizarAdministrador } = require('../autorizacao-middleware');
 
 const router = express.Router();
 
@@ -124,7 +125,7 @@ router.get('/me', autenticar, (req, res) => {
  * POST /api/auth/cadastrar-colaborador
  * Permite que um gestor cadastre um novo colaborador informando cargo, setor e perfil.
  */
-router.post('/cadastrar-colaborador', autenticar, (req, res) => {
+router.post('/cadastrar-colaborador', autenticar, autorizarAdministrador, (req, res) => {
   const { nome, email, senha, perfil, setor } = req.body;
 
   if (!nome || !email || !senha || !perfil || !setor) {
@@ -264,7 +265,7 @@ router.post('/redefinir-senha', (req, res) => {
  * GET /api/auth/colaboradores
  * Retorna a lista de todos os usuários cadastrados para exibir na gestão.
  */
-router.get('/colaboradores', autenticar, (req, res) => {
+router.get('/colaboradores', autenticar, autorizarAdministrador, (req, res) => {
   const colaboradores = db
     .prepare('SELECT id, nome, email, cargo, setor, perfil, status, criado_em FROM usuarios')
     .all();
@@ -272,7 +273,7 @@ router.get('/colaboradores', autenticar, (req, res) => {
   res.json({ colaboradores });
 });
 
-router.patch('/desativar-colaborador/:id', autenticar, (req, res) => {
+router.patch('/desativar-colaborador/:id', autenticar, autorizarAdministrador, (req, res) => {
   try {
     const { id } = req.params;
 
@@ -292,7 +293,7 @@ router.patch('/desativar-colaborador/:id', autenticar, (req, res) => {
   }
 });
 
-router.patch('/ativar-colaborador/:id', autenticar, (req, res) => {
+router.patch('/ativar-colaborador/:id', autenticar, autorizarAdministrador, (req, res) => {
   try {
     const { id } = req.params;
 
@@ -311,7 +312,7 @@ router.patch('/ativar-colaborador/:id', autenticar, (req, res) => {
   }
 });
 
-router.patch('/atualizar-perfil-setor/:id', autenticar, (req, res) => {
+router.patch('/atualizar-perfil-setor/:id', autenticar, autorizarAdministrador, (req, res) => {
   try {
     const { id } = req.params;
     const { perfil, setor } = req.body;
@@ -597,6 +598,135 @@ router.get('/indicadores', autenticar, (req, res) => {
   }
 });
 
+const mapaPermissoes = {
+  registrarRecebimentos: 'registrar_recebimentos',
+  cadastrarClientes: 'cadastrar_clientes',
+  adicionarFotos: 'adicionar_fotos',
+  registrarProblemas: 'registrar_problemas',
+  definirCausaRaiz: 'definir_causa_raiz',
+  encerrarAcoes: 'encerrar_acoes',
+  avaliarEficacia: 'avaliar_eficacia',
+};
+
+router.get(
+  '/permissoes/:id',
+  autenticar,
+  autorizarAdministrador,
+  (req, res) => {
+    try {
+      const usuarioId = Number(req.params.id);
+
+      if (!Number.isInteger(usuarioId)) {
+        return res.status(400).json({
+          erro: 'ID de usuário inválido.',
+        });
+      }
+
+      db.prepare(`
+        INSERT OR IGNORE INTO permissoes_usuario (usuario_id)
+        VALUES (?)
+      `).run(usuarioId);
+
+      const permissoes = db
+        .prepare(`
+          SELECT
+            registrar_recebimentos AS registrarRecebimentos,
+            cadastrar_clientes AS cadastrarClientes,
+            adicionar_fotos AS adicionarFotos,
+            registrar_problemas AS registrarProblemas,
+            definir_causa_raiz AS definirCausaRaiz,
+            encerrar_acoes AS encerrarAcoes,
+            avaliar_eficacia AS avaliarEficacia
+          FROM permissoes_usuario
+          WHERE usuario_id = ?
+        `)
+        .get(usuarioId);
+
+      if (!permissoes) {
+        return res.status(404).json({
+          erro: 'Permissões não encontradas.',
+        });
+      }
+
+      res.json({
+        permissoes: Object.fromEntries(
+          Object.entries(permissoes).map(([chave, valor]) => [
+            chave,
+            Boolean(valor),
+          ])
+        ),
+      });
+    } catch (error) {
+      console.log('Erro ao buscar permissões:', error);
+      res.status(500).json({
+        erro: 'Erro interno ao buscar permissões.',
+      });
+    }
+  }
+);
+
+router.put(
+  '/permissoes/:id',
+  autenticar,
+  autorizarAdministrador,
+  (req, res) => {
+    try {
+      const usuarioId = Number(req.params.id);
+
+      if (!Number.isInteger(usuarioId)) {
+        return res.status(400).json({
+          erro: 'ID de usuário inválido.',
+        });
+      }
+
+      const permissoesRecebidas = req.body;
+
+      const campos = Object.keys(mapaPermissoes);
+
+      for (const chave of campos) {
+        if (
+          permissoesRecebidas[chave] !== undefined &&
+          typeof permissoesRecebidas[chave] !== 'boolean'
+        ) {
+          return res.status(400).json({
+            erro: `A permissão "${chave}" deve ser booleana.`,
+          });
+        }
+      }
+
+      db.prepare(`
+        INSERT OR IGNORE INTO permissoes_usuario (usuario_id)
+        VALUES (?)
+      `).run(usuarioId);
+
+      const valores = campos.map((chave) =>
+        permissoesRecebidas[chave] ? 1 : 0
+      );
+
+      db.prepare(`
+        UPDATE permissoes_usuario
+        SET
+          registrar_recebimentos = ?,
+          cadastrar_clientes = ?,
+          adicionar_fotos = ?,
+          registrar_problemas = ?,
+          definir_causa_raiz = ?,
+          encerrar_acoes = ?,
+          avaliar_eficacia = ?
+        WHERE usuario_id = ?
+      `).run(...valores, usuarioId);
+
+      res.json({
+        mensagem: 'Permissões salvas com sucesso.',
+      });
+    } catch (error) {
+      console.log('Erro ao salvar permissões:', error);
+      res.status(500).json({
+        erro: 'Erro interno ao salvar permissões.',
+      });
+    }
+  }
+);
 /**
  * GET /api/auth/indicadores/detalhe
  * Lista os registros por trás de uma barra do gráfico de indicadores

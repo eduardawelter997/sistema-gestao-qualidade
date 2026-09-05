@@ -28,6 +28,18 @@ function init() {
       criado_em TEXT DEFAULT (datetime('now'))
     );
 
+    CREATE TABLE IF NOT EXISTS permissoes_usuario (
+      usuario_id INTEGER PRIMARY KEY,
+      registrar_recebimentos INTEGER NOT NULL DEFAULT 0,
+      cadastrar_clientes INTEGER NOT NULL DEFAULT 0,
+      adicionar_fotos INTEGER NOT NULL DEFAULT 0,
+      registrar_problemas INTEGER NOT NULL DEFAULT 0,
+      definir_causa_raiz INTEGER NOT NULL DEFAULT 0,
+      encerrar_acoes INTEGER NOT NULL DEFAULT 0,
+      avaliar_eficacia INTEGER NOT NULL DEFAULT 0,
+      FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
+    );
+
     CREATE TABLE IF NOT EXISTS registros (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       tipo TEXT NOT NULL,          -- op | ocorrencia | acao | recebimento | ...
@@ -50,6 +62,11 @@ function init() {
       FOREIGN KEY (registro_id) REFERENCES registros(id)
     );
   `);
+
+  db.prepare(`
+    INSERT OR IGNORE INTO permissoes_usuario (usuario_id)
+    SELECT id FROM usuarios
+  `).run();
 
   // Colunas adicionadas depois da criação inicial da tabela (bancos já
   // existentes não ganham colunas novas via CREATE TABLE IF NOT EXISTS).

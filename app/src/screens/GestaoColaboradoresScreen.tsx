@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -14,9 +14,20 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import Header from '../components/Header';
 import { colors } from '../theme/colors';
 import { API_URL } from '../config/api';
+import { useAuth } from '../context/AuthContext';
 
 export default function GestaoColaboradoresScreen() {
   const navigation = useNavigation<any>();
+  const { usuario, carregando: carregandoUsuario } = useAuth();
+
+  const autorizado =
+  usuario?.perfil?.toLowerCase() === 'administrador';
+
+  useEffect(() => {
+  if (!carregandoUsuario && !autorizado) {
+    navigation.navigate('Mais');
+  }
+}, [carregandoUsuario, autorizado, navigation]);
   const [colaboradores, setColaboradores] = useState<any[]>([]);
   const [carregando, setCarregando] = useState(true);
 
@@ -50,11 +61,18 @@ export default function GestaoColaboradoresScreen() {
 
   // Atualiza a lista toda vez que a tela ganha foco (ex: volta da tela de cadastro)
   useFocusEffect(
-    useCallback(() => {
-      buscarColaboradores();
-    }, [])
+  useCallback(() => {
+    if (carregandoUsuario || !autorizado) {
+      return;
+    }
+
+    buscarColaboradores();
+  }, [carregandoUsuario, autorizado])
   );
 
+  if (carregandoUsuario || !autorizado) {
+  return null;
+}
   return (
     <View style={styles.container}>
       <Header />
@@ -62,7 +80,7 @@ export default function GestaoColaboradoresScreen() {
       <ScrollView contentContainerStyle={styles.content}>
         {/* Subcabeçalho com botão voltar */}
         <View style={styles.subHeader}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.botaoVoltar}>
+          <TouchableOpacity onPress={() => navigation.navigate('Mais')} style={styles.botaoVoltar}>
             <Ionicons name="arrow-back" size={22} color={colors.primary} />
           </TouchableOpacity>
           <View>
