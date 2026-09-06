@@ -2,7 +2,7 @@
  * Tela "Novo Recebimento" — registra o recebimento de material de um cliente
  * ou fornecedor, opcionalmente vinculado a uma OP.
  */
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -13,7 +13,7 @@ import {
   Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
 
 import { colors } from '../theme/colors';
@@ -97,6 +97,27 @@ export default function NovoRecebimentoScreen() {
       .then((r) => setUsuarios(r.usuarios))
       .catch(() => {});
   }, []);
+
+  // A tela fica registrada como "aba escondida" no navegador, então o React
+  // não a desmonta ao voltar — sem isso, o formulário reapareceria com os
+  // dados da última vez que foi preenchido.
+  useFocusEffect(
+    useCallback(() => {
+      setRecebimentoDe('fornecedor');
+      setClienteFornecedor(null);
+      setNotaFiscal('');
+      setMaterial('');
+      setOpRelacionada(null);
+      setData(dataDeHoje());
+      setResponsavel('');
+      setComProblema(false);
+      setObservacoes('');
+      setFoto(null);
+      setMostrarClientesFornecedores(false);
+      setMostrarOps(false);
+      setMostrarResponsaveis(false);
+    }, [])
+  );
 
   // Ao trocar o toggle, descarta a seleção se ela não for do tipo escolhido
   function onTrocarRecebimentoDe(tipo: 'cliente' | 'fornecedor') {

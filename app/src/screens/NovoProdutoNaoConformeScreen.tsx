@@ -3,7 +3,7 @@
  * especificação, opcionalmente vinculado a uma OP e a um cliente/fornecedor.
  * Ao salvar, cria uma ocorrência e abre a tela de detalhe dela.
  */
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
   View,
   Text,
@@ -14,7 +14,7 @@ import {
   Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
 
 import { colors } from '../theme/colors';
@@ -102,17 +102,39 @@ export default function NovoProdutoNaoConformeScreen() {
 
   const [foto, setFoto] = useState<{ uri: string; name: string; type: string } | null>(null);
 
-  useEffect(() => {
-    listarRegistros('op')
-      .then((r) => setOps(r.registros))
-      .catch(() => {});
-    listarClientesFornecedores()
-      .then(setClientesFornecedores)
-      .catch(() => {});
-    listarUsuarios()
-      .then((r) => setUsuarios(r.usuarios))
-      .catch(() => {});
-  }, []);
+  // A tela fica registrada como "aba escondida" no navegador, então o React
+  // não a desmonta ao voltar — sem isso, o formulário reapareceria com os
+  // dados da última vez que foi preenchido.
+  useFocusEffect(
+    useCallback(() => {
+      setProduto('');
+      setLote('');
+      setQuantidade('');
+      setOpRelacionada(null);
+      setClienteFornecedor(null);
+      setSetorProcesso('');
+      setResponsavel('');
+      setData(dataDeHoje());
+      setDescricao('');
+      setDisposicao('');
+      setFoto(null);
+      setMostrarOps(false);
+      setMostrarClientesFornecedores(false);
+      setMostrarSetores(false);
+      setMostrarResponsaveis(false);
+      setMostrarDisposicoes(false);
+
+      listarRegistros('op')
+        .then((r) => setOps(r.registros))
+        .catch(() => {});
+      listarClientesFornecedores()
+        .then(setClientesFornecedores)
+        .catch(() => {});
+      listarUsuarios()
+        .then((r) => setUsuarios(r.usuarios))
+        .catch(() => {});
+    }, [])
+  );
 
   async function onEscolherFoto() {
     const arquivo = await escolherFoto();

@@ -2,7 +2,7 @@
  * Tela "Nova Ação Corretiva" — abre uma ação corretiva, opcionalmente
  * vinculada a uma ocorrência (quando aberta a partir da tela de detalhe dela).
  */
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
   View,
   Text,
@@ -13,7 +13,7 @@ import {
   Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
+import { useFocusEffect, useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
 
 import { colors } from '../theme/colors';
@@ -106,25 +106,47 @@ export default function NovaAcaoCorretivaScreen() {
   const [acaoProposta, setAcaoProposta] = useState('');
   const [foto, setFoto] = useState<{ uri: string; name: string; type: string } | null>(null);
 
-  useEffect(() => {
-    listarRegistros('ocorrencia')
-      .then((r) => {
-        setOcorrencias(r.registros);
-        if (ocorrenciaId) {
-          const encontrada = r.registros.find((o) => o.id === ocorrenciaId);
-          if (encontrada) setOcorrenciaSelecionada(encontrada);
-        }
-      })
-      .catch(() => {});
-    listarClientesFornecedores()
-      .then(setClientesFornecedores)
-      .catch(() => {});
-    listarUsuarios()
-      .then((r) => setUsuarios(r.usuarios))
-      .catch(() => {});
+  // A tela fica registrada como "aba escondida" no navegador, então o React
+  // não a desmonta ao voltar — sem isso, o formulário reapareceria com os
+  // dados da última vez que foi preenchido. Recalcula o pré-preenchimento a
+  // partir dos parâmetros de rota (quando vem de uma Ocorrência) toda vez
+  // que a tela ganha foco, em vez de só na primeira montagem.
+  useFocusEffect(
+    useCallback(() => {
+      setOrigem(ocorrenciaTravada ? 'Ocorrência' : '');
+      setMetodoAnalise('');
+      setOcorrenciaSelecionada(null);
+      setClienteFornecedor(null);
+      setResponsavel('');
+      setSetorResponsavel('');
+      setPrazo(dataDeHoje());
+      setAnaliseCausa('');
+      setAcaoProposta('');
+      setFoto(null);
+      setMostrarOrigens(false);
+      setMostrarMetodos(false);
+      setMostrarOcorrencias(false);
+      setMostrarClientesFornecedores(false);
+      setMostrarResponsaveis(false);
+      setMostrarSetores(false);
 
-    if (ocorrenciaTravada) setOrigem('Ocorrência');
-  }, []);
+      listarRegistros('ocorrencia')
+        .then((r) => {
+          setOcorrencias(r.registros);
+          if (ocorrenciaId) {
+            const encontrada = r.registros.find((o) => o.id === ocorrenciaId);
+            if (encontrada) setOcorrenciaSelecionada(encontrada);
+          }
+        })
+        .catch(() => {});
+      listarClientesFornecedores()
+        .then(setClientesFornecedores)
+        .catch(() => {});
+      listarUsuarios()
+        .then((r) => setUsuarios(r.usuarios))
+        .catch(() => {});
+    }, [ocorrenciaId, ocorrenciaTravada])
+  );
 
   async function onEscolherFoto() {
     const arquivo = await escolherFoto();

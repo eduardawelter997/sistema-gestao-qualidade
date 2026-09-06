@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
   View,
   Text,
@@ -8,7 +8,7 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { colors } from '../theme/colors';
 import { criarRegistro } from '../services/api';
 import { alertar } from '../utils/alerta';
@@ -80,6 +80,20 @@ export default function CadastrarClienteScreen() {
   const [email, setEmail] = useState('');
   const [telefone, setTelefone] = useState('');
   const [observacoes, setObservacoes] = useState('');
+
+  // A tela fica registrada como "aba escondida" no navegador, então o React
+  // não a desmonta ao voltar — sem isso, o formulário reapareceria com os
+  // dados da última vez que foi preenchido.
+  useFocusEffect(
+    useCallback(() => {
+      setTipoCadastro('cliente');
+      setNome('');
+      setCpfCnpj('');
+      setEmail('');
+      setTelefone('');
+      setObservacoes('');
+    }, [])
+  );
 
   // Função de salvar
   const handleSalvarCadastro = async () => {
