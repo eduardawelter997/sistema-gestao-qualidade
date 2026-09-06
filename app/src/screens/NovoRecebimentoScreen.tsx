@@ -86,6 +86,24 @@ export default function NovoRecebimentoScreen() {
   const [observacoes, setObservacoes] = useState('');
   const [foto, setFoto] = useState<{ uri: string; name: string; type: string } | null>(null);
 
+  useFocusEffect(
+    useCallback(() => {
+      let telaAtiva = true;
+
+      listarClientesFornecedores()
+        .then((lista) => {
+          if (telaAtiva) {
+            setClientesFornecedores(lista);
+          }
+        })
+        .catch(() => {});
+
+      return () => {
+        telaAtiva = false;
+      };
+    }, [])
+  );
+
   useEffect(() => {
     listarClientesFornecedores()
       .then(setClientesFornecedores)
