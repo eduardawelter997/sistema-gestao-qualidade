@@ -4,7 +4,7 @@
  * cliente/fornecedor. Pode chegar pré-preenchida (ex: a partir do botão
  * "Registrar problema" da tela de detalhe de um Recebimento).
  */
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
   View,
   Text,
@@ -15,7 +15,7 @@ import {
   Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
+import { useFocusEffect, useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
 
 import { colors } from '../theme/colors';
@@ -126,17 +126,46 @@ export default function NovaOcorrenciaScreen() {
   const [descricao, setDescricao] = useState('');
   const [foto, setFoto] = useState<{ uri: string; name: string; type: string } | null>(null);
 
-  useEffect(() => {
-    listarRegistros('op')
-      .then((r) => setOps(r.registros))
-      .catch(() => {});
-    listarClientesFornecedores()
-      .then(setClientesFornecedores)
-      .catch(() => {});
-    listarUsuarios()
-      .then((r) => setUsuarios(r.usuarios))
-      .catch(() => {});
-  }, []);
+  // A tela fica registrada como "aba escondida" no navegador, então o React
+  // não a desmonta ao voltar — sem isso, o formulário reapareceria com os
+  // dados da última vez que foi preenchido. Recalcula o pré-preenchimento a
+  // partir dos parâmetros de rota (quando vem de "Registrar problema", etc.)
+  // toda vez que a tela ganha foco, em vez de só na primeira montagem.
+  useFocusEffect(
+    useCallback(() => {
+      setTipoOcorrencia(tipoPreSelecionado || '');
+      setOpRelacionada(
+        opRelacionadaId && opRelacionadaCodigo
+          ? { id: opRelacionadaId, codigo: opRelacionadaCodigo }
+          : null
+      );
+      setClienteFornecedor(
+        clienteFornecedorId && clienteFornecedorLabel
+          ? { id: clienteFornecedorId, label: clienteFornecedorLabel }
+          : null
+      );
+      setSetorProcesso('');
+      setResponsavel('');
+      setData(dataDeHoje());
+      setDescricao('');
+      setFoto(null);
+      setMostrarTipos(false);
+      setMostrarOps(false);
+      setMostrarClientesFornecedores(false);
+      setMostrarSetores(false);
+      setMostrarResponsaveis(false);
+
+      listarRegistros('op')
+        .then((r) => setOps(r.registros))
+        .catch(() => {});
+      listarClientesFornecedores()
+        .then(setClientesFornecedores)
+        .catch(() => {});
+      listarUsuarios()
+        .then((r) => setUsuarios(r.usuarios))
+        .catch(() => {});
+    }, [tipoPreSelecionado, opRelacionadaId, opRelacionadaCodigo, clienteFornecedorId, clienteFornecedorLabel])
+  );
 
   async function onEscolherFoto() {
     const arquivo = await escolherFoto();

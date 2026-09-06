@@ -2,7 +2,7 @@
  * Tela para adicionar um novo registro (evento) à linha do tempo de uma OP:
  * recebimento, ocorrência, retrabalho, reparo, inspeção ou inspeção final.
  */
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -14,7 +14,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
+import { useFocusEffect, useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
 
 import { colors } from '../theme/colors';
@@ -99,6 +99,26 @@ export default function NovoRegistroOpScreen() {
       .then((r) => setUsuarios(r.usuarios))
       .catch(() => {});
   }, []);
+
+  // A tela fica registrada como "aba escondida" no navegador, então o React
+  // não a desmonta ao voltar — sem isso, um novo registro reapareceria com
+  // os dados da última vez que foi preenchido. Não se aplica ao modo edição,
+  // que já busca e sobrescreve os campos com os dados do registro abaixo.
+  useFocusEffect(
+    useCallback(() => {
+      if (registroId) return;
+      setTipoRegistro('');
+      setResponsavel('');
+      setDataRegistro(dataDeHoje());
+      setSituacao('Em andamento');
+      setProcesso('');
+      setDetalhes('');
+      setFoto(null);
+      setMostrarTipos(false);
+      setMostrarResponsaveis(false);
+      setMostrarSituacoes(false);
+    }, [registroId])
+  );
 
   useEffect(() => {
     if (!registroId) return;

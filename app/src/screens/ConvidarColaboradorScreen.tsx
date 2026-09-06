@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
   View,
   Text,
@@ -9,7 +9,7 @@ import {
   Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { colors } from '../theme/colors';
 import { API_URL } from '../config/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -38,6 +38,21 @@ export default function ConvidarColaboradorScreen() {
     'Banca',
     'Desenvolvimento',
   ];
+
+  // A tela fica registrada como "aba escondida" no navegador, então o React
+  // não a desmonta ao voltar — sem isso, o formulário reapareceria com os
+  // dados da última vez que foi preenchido.
+  useFocusEffect(
+    useCallback(() => {
+      setNome('');
+      setEmail('');
+      setSenha('');
+      setPerfil('');
+      setSetor('');
+      setMostrarListaPerfil(false);
+      setMostrarListaSetor(false);
+    }, [])
+  );
 
   const handleCadastrarAcesso = async () => {
     if (!nome || !email || !senha || !perfil || !setor) {

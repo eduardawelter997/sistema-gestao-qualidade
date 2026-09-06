@@ -47,8 +47,23 @@ export default function NovaOpScreen() {
   const [mostrarListaSituacao, setMostrarListaSituacao] = useState(false);
   const situacoesOp = ['Aberta', 'Em andamento', 'Concluído'];
 
+  // A tela fica registrada como "aba escondida" no navegador, então o React
+  // não a desmonta ao voltar — sem isso, o formulário reapareceria com os
+  // dados da última vez que foi preenchido.
   useFocusEffect(
     useCallback(() => {
+      setCliente('');
+      setResponsavel('');
+      setDataAbertura(dataDeHoje());
+      setProduto('');
+      setNumeroOp('');
+      setTipoProcesso('');
+      setSituacao('Em andamento');
+      setMostrarListaClientes(false);
+      setMostrarListaResponsaveis(false);
+      setMostrarListaProcesso(false);
+      setMostrarListaSituacao(false);
+
       carregarClientes();
       carregarUsuarios();
     }, [])
