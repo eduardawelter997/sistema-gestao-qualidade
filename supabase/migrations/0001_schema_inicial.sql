@@ -128,6 +128,12 @@ create policy profiles_update on public.profiles
 create or replace function public.verificar_update_profile()
 returns trigger language plpgsql security definer set search_path = public as $$
 begin
+  -- auth.uid() só existe quando a query passa pelo PostgREST/Auth do
+  -- Supabase (o app). Uma query direta no SQL Editor (só quem tem acesso
+  -- ao painel do projeto) não tem esse contexto — libera nesse caso.
+  if auth.uid() is null then
+    return new;
+  end if;
   if not public.eh_admin() then
     if old.id <> auth.uid() then
       raise exception 'Você só pode editar o seu próprio perfil.' using errcode = '42501';
@@ -172,10 +178,10 @@ create table public.registros (
   descricao                 text,
   status                    text not null,
   data                      text not null,       -- mantido como "DD/MM/AAAA" (mesmo formato usado nas telas)
-  data_iso                  date generated always as (
-                              case when data ~ '^\d{2}/\d{2}/\d{4}$'
-                                   then to_date(data, 'DD/MM/YYYY') end
-                            ) stored,
+  -- data_iso não é coluna gerada porque to_date() não é IMMUTABLE no Postgres
+  -- (exigido para "generated always as ... stored"); é preenchida pela
+  -- trigger verificar_registro() abaixo, em INSERT e UPDATE.
+  data_iso                  date,
   favorito                  boolean not null default false,
   criado_por                uuid references public.profiles(id),
   criado_em                 timestamptz not null default now(),
@@ -244,6 +250,11 @@ begin
     if new.data is null or new.data = '' then
       new.data := to_char(now(), 'DD/MM/YYYY');
     end if;
+    if new.data ~ '^\d{2}/\d{2}/\d{4}$' then
+      new.data_iso := to_date(new.data, 'DD/MM/YYYY');
+    else
+      new.data_iso := null;
+    end if;
     if new.tipo in ('cliente', 'fornecedor') and not public.tem_permissao('cadastrar_clientes') then
       raise exception 'Você não possui permissão para cadastrar clientes ou fornecedores.' using errcode = '42501';
     end if;
@@ -260,6 +271,11 @@ begin
   end if;
 
   -- TG_OP = 'UPDATE'
+  if new.data ~ '^\d{2}/\d{2}/\d{4}$' then
+    new.data_iso := to_date(new.data, 'DD/MM/YYYY');
+  else
+    new.data_iso := null;
+  end if;
   if old.op_id is not null and old.status <> 'Em andamento' then
     raise exception 'Só é possível editar registros que estejam "Em andamento".' using errcode = '42501';
   end if;
