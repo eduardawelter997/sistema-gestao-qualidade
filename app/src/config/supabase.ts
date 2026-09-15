@@ -23,11 +23,37 @@ if (!supabaseUrl || !supabaseAnonKey) {
   );
 }
 
+// Adaptador explícito de localStorage pro navegador — em vez de deixar o
+// supabase-js "adivinhar" o ambiente sozinho (no bundle web do Expo/Metro
+// essa detecção automática pode falhar e cair num storage só em memória,
+// que se perde ao fechar a aba/app).
+const webStorage = {
+  getItem: (key: string) => {
+    try {
+      return window.localStorage.getItem(key);
+    } catch {
+      return null;
+    }
+  },
+  setItem: (key: string, value: string) => {
+    try {
+      window.localStorage.setItem(key, value);
+    } catch {
+      // Armazenamento indisponível (ex: modo privado) — sessão só dura a aba.
+    }
+  },
+  removeItem: (key: string) => {
+    try {
+      window.localStorage.removeItem(key);
+    } catch {
+      // Ignora.
+    }
+  },
+};
+
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
-    // No navegador o próprio supabase-js usa localStorage; no app nativo
-    // (Expo Go / build), guarda a sessão no AsyncStorage do dispositivo.
-    storage: Platform.OS === 'web' ? undefined : AsyncStorage,
+    storage: Platform.OS === 'web' ? webStorage : AsyncStorage,
     autoRefreshToken: true,
     persistSession: true,
     // No navegador precisa ler o token que o link de "recuperar senha" do
