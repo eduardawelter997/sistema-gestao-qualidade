@@ -95,14 +95,6 @@ export default function LoginScreen({ navigation }: Props) {
             )}
           </TouchableOpacity>
 
-          {/* Botão secundário: leva para a tela de ativação de acesso */}
-          <TouchableOpacity
-            style={styles.button}
-            onPress={() => navigation.navigate('PrimeiroAcesso')}
-          >
-            <Text style={styles.buttonText}>Primeiro acesso</Text>
-          </TouchableOpacity>
-
           {/* Link "Esqueci minha senha" */}
           <TouchableOpacity onPress={() => navigation.navigate('RecuperarSenha')}>
             <Text style={styles.forgotText}>Esqueci minha senha</Text>

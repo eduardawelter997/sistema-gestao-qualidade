@@ -3,8 +3,8 @@
  * Antes guardava o token manualmente no AsyncStorage; agora a sessão é
  * controlada pelo próprio Supabase Auth (supabase.auth), que já persiste
  * e renova o login sozinho. Este contexto só reflete esse estado pro
- * resto do app e expõe entrar/ativarAcesso/sair com a mesma assinatura de
- * antes, pra não precisar mexer nas telas que os usam.
+ * resto do app e expõe entrar/sair com a mesma assinatura de antes, pra
+ * não precisar mexer nas telas que os usam.
  */
 import React, {
   createContext,
@@ -22,7 +22,6 @@ interface AuthContextData {
   carregando: boolean; // true enquanto verifica se já havia login salvo
   modoRecuperacaoSenha: boolean; // true depois de abrir o link de "esqueci minha senha"
   entrar: (email: string, senha: string) => Promise<void>;
-  ativarAcesso: (nome: string, email: string, senha: string) => Promise<void>;
   sair: () => Promise<void>;
   finalizarRecuperacaoSenha: () => Promise<void>;
 }
@@ -73,7 +72,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUsuario(null);
         return;
       }
-      // SIGNED_IN já é tratado direto por entrar()/ativarAcesso() (que
+      // SIGNED_IN já é tratado direto por entrar() (que
       // conferem o status da conta e chamam setUsuario sozinhos). Reagir de
       // novo aqui cria uma corrida: as duas checagens de status rodam ao
       // mesmo tempo e, pra uma conta Pendente/Inativa, as duas tentam
@@ -97,11 +96,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUsuario(usuario);
   }
 
-  async function ativarAcesso(nome: string, email: string, senha: string) {
-    const { usuario } = await api.ativarAcesso(nome, email, senha);
-    setUsuario(usuario);
-  }
-
   async function sair() {
     await supabase.auth.signOut();
     setUsuario(null);
@@ -120,7 +114,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         carregando,
         modoRecuperacaoSenha,
         entrar,
-        ativarAcesso,
         sair,
         finalizarRecuperacaoSenha,
       }}

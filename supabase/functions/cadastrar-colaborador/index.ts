@@ -89,7 +89,9 @@ Deno.serve(async (req) => {
     email: String(email).toLowerCase(),
     password: senha,
     email_confirm: true,
-    user_metadata: { nome, perfil, setor, status: 'Pendente' },
+    // O colaborador já entra direto com esse e-mail/senha — não existe mais
+    // um passo separado de "primeiro acesso" pra ativar a conta.
+    user_metadata: { nome, perfil, setor, status: 'Ativo' },
   });
 
   if (erroCriacao) {

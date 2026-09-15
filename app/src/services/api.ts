@@ -147,45 +147,6 @@ export async function login(email: string, senha: string): Promise<{ usuario: Us
   return { usuario: mapUsuario(perfil) };
 }
 
-export async function ativarAcesso(
-  nome: string,
-  email: string,
-  senha: string
-): Promise<{ usuario: Usuario }> {
-  const { data, error } = await supabase.auth.signInWithPassword({
-    email: email.toLowerCase(),
-    password: senha,
-  });
-  if (error || !data.user) {
-    throw new Error('Nenhum acesso encontrado para este e-mail, ou senha inicial incorreta.');
-  }
-
-  const { data: perfil, error: erroPerfil } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', data.user.id)
-    .single();
-
-  if (erroPerfil || !perfil) {
-    await supabase.auth.signOut();
-    throw new Error('Não foi possível carregar seu perfil.');
-  }
-  if (perfil.status !== 'Pendente') {
-    await supabase.auth.signOut();
-    throw new Error('Este acesso já foi ativado. Use a tela de login.');
-  }
-
-  const { data: atualizado, error: erroUpdate } = await supabase
-    .from('profiles')
-    .update({ nome, status: 'Ativo' })
-    .eq('id', data.user.id)
-    .select('*')
-    .single();
-  tratarErro(erroUpdate);
-
-  return { usuario: mapUsuario(atualizado) };
-}
-
 // Recuperação de senha: agora usa o fluxo nativo de e-mail do Supabase (um
 // link, não mais um código fixo). solicitarRecuperacaoSenha manda o link;
 // redefinirSenhaComSessaoRecuperacao troca a senha usando a sessão temporária

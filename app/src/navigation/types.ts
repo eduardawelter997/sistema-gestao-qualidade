@@ -3,7 +3,6 @@
  */
 export type AuthStackParamList = {
   Login: undefined;
-  PrimeiroAcesso: undefined;
   RecuperarSenha: undefined;
   AlterarSenha: undefined;
 };
