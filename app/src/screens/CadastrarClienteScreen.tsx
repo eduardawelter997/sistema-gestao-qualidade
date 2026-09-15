@@ -97,7 +97,7 @@ export default function CadastrarClienteScreen() {
 
   // Função de salvar
   const handleSalvarCadastro = async () => {
-    if (!nome || !cpfCnpj) {
+    if (!nome) {
       alertar('Atenção', 'Por favor, preencha os campos obrigatórios.');
       return;
     }
@@ -189,7 +189,7 @@ export default function CadastrarClienteScreen() {
         />
 
         {/* CPF / CNPJ */}
-        <Text style={styles.label}>CPF/CNPJ: <Text style={styles.obrigatorio}>*</Text></Text>
+        <Text style={styles.label}>CPF/CNPJ:</Text>
         <TextInput
           placeholder="Digite o CPF ou CNPJ"
           placeholderTextColor={colors.textSecondary}
