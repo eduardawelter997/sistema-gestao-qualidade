@@ -7,13 +7,13 @@ import {
   TextInput,
   TouchableOpacity,
   ActivityIndicator,
-  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { listarClientesFornecedores } from '../services/api';
 import Header from '../components/Header';
 import { colors } from '../theme/colors';
+import { alertar } from '../utils/alerta';
 
 export default function ClientesFornecedoresScreen() {
   const navigation = useNavigation<any>();
@@ -33,7 +33,7 @@ export default function ClientesFornecedoresScreen() {
     setItens(lista);
   } catch (error: any) {
     console.log('Erro ao buscar clientes/fornecedores:', error);
-    Alert.alert(
+    alertar(
       'Erro',
       error.message || 'Falha ao conectar com o servidor.'
     );

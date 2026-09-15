@@ -6,13 +6,13 @@ import {
   ScrollView,
   TextInput,
   TouchableOpacity,
-  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import Header from '../components/Header';
 import { colors } from '../theme/colors';
 import { alterarSenha } from '../services/api';
+import { alertar } from '../utils/alerta';
 
 export default function AlterarSenhaScreen() {
   const navigation = useNavigation<any>();
@@ -44,11 +44,8 @@ export default function AlterarSenhaScreen() {
       setNovaSenha('');
       setConfirmarSenha('');
 
-      Alert.alert(
-        'Sucesso',
-        dados.mensagem || 'Senha alterada com sucesso!',
-        [{ text: 'OK', onPress: () => navigation.goBack() }]
-      );
+      alertar('Sucesso', dados.mensagem || 'Senha alterada com sucesso!');
+      navigation.goBack();
     } catch (error: any) {
       console.log('Erro ao alterar senha:', error);
       setMensagemErro(error.message || 'Falha ao conectar com o servidor.');

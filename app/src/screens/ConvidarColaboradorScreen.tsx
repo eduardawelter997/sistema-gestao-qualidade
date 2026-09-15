@@ -6,12 +6,12 @@ import {
   ScrollView,
   TextInput,
   TouchableOpacity,
-  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { colors } from '../theme/colors';
 import { cadastrarColaborador } from '../services/api';
+import { alertar } from '../utils/alerta';
 
 export default function ConvidarColaboradorScreen() {
   const navigation = useNavigation<any>();
@@ -55,7 +55,7 @@ export default function ConvidarColaboradorScreen() {
 
   const handleCadastrarAcesso = async () => {
     if (!nome || !email || !senha || !perfil || !setor) {
-      Alert.alert('Atenção', 'Por favor, preencha todos os campos, incluindo a senha de acesso.');
+      alertar('Atenção', 'Por favor, preencha todos os campos, incluindo a senha de acesso.');
       return;
     }
 
@@ -69,11 +69,11 @@ export default function ConvidarColaboradorScreen() {
       setPerfil('');
       setSetor('');
 
-      Alert.alert('Sucesso', 'Acesso do colaborador cadastrado com sucesso!');
+      alertar('Sucesso', 'Acesso do colaborador cadastrado com sucesso!');
       navigation.navigate('GestaoColaboradores');
     } catch (error: any) {
       console.log('Erro ao cadastrar colaborador:', error);
-      Alert.alert('Erro', error.message || 'Não foi possível cadastrar o colaborador.');
+      alertar('Erro', error.message || 'Não foi possível cadastrar o colaborador.');
     }
   };
 

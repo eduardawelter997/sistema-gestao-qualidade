@@ -6,13 +6,13 @@ import {
   ScrollView,
   TextInput,
   TouchableOpacity,
-  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import Header from '../components/Header';
 import { colors } from '../theme/colors';
 import { buscarPerfil, atualizarMeuPerfil } from '../services/api';
+import { alertar } from '../utils/alerta';
 
 export default function PerfilScreen() {
   const navigation = useNavigation<any>();
@@ -41,17 +41,17 @@ export default function PerfilScreen() {
 
   const handleSalvarAlteracoes = async () => {
     if (!nome || !email) {
-      Alert.alert('Atenção', 'Nome e e-mail não podem ficar vazios.');
+      alertar('Atenção', 'Nome e e-mail não podem ficar vazios.');
       return;
     }
 
     try {
       setCarregando(true);
       const dados = await atualizarMeuPerfil(nome, email);
-      Alert.alert('Sucesso', dados.mensagem || 'Alterações salvas com sucesso!');
+      alertar('Sucesso', dados.mensagem || 'Alterações salvas com sucesso!');
     } catch (error: any) {
       console.log('Erro ao salvar alterações:', error);
-      Alert.alert('Erro', error.message || 'Não foi possível salvar as alterações.');
+      alertar('Erro', error.message || 'Não foi possível salvar as alterações.');
     } finally {
       setCarregando(false);
     }

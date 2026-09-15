@@ -8,12 +8,12 @@ import {
   TouchableOpacity,
   Modal,
   Linking,
-  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import Header from '../components/Header';
 import { colors } from '../theme/colors';
+import { alertar } from '../utils/alerta';
 
 // Lista de dúvidas frequentes com seus conteúdos
 const duvidasFrequentes = [
@@ -89,7 +89,7 @@ export default function AjudaScreen() {
     const email = 'suporte@gruposetti.com.br';
     const assunto = 'Suporte - Aplicativo Gestão da Qualidade';
     Linking.openURL(`mailto:${email}?subject=${encodeURIComponent(assunto)}`).catch(() => {
-      Alert.alert('Contato', 'Envie um e-mail para: suporte@gruposetti.com.br');
+      alertar('Contato', 'Envie um e-mail para: suporte@gruposetti.com.br');
     });
   };
 

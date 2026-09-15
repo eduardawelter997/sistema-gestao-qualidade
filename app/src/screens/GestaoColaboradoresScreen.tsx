@@ -5,7 +5,6 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Alert,
   ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -14,6 +13,7 @@ import Header from '../components/Header';
 import { colors } from '../theme/colors';
 import { listarColaboradores } from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { alertar } from '../utils/alerta';
 
 export default function GestaoColaboradoresScreen() {
   const navigation = useNavigation<any>();
@@ -38,7 +38,7 @@ export default function GestaoColaboradoresScreen() {
       setColaboradores(colaboradores || []);
     } catch (error: any) {
       console.log('Erro ao buscar colaboradores:', error);
-      Alert.alert('Erro', error.message || 'Falha na conexão com o servidor.');
+      alertar('Erro', error.message || 'Falha na conexão com o servidor.');
     } finally {
       setCarregando(false);
     }

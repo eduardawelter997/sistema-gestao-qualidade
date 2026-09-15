@@ -6,7 +6,6 @@ import {
   ScrollView,
   TouchableOpacity,
   Switch,
-  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -19,6 +18,7 @@ import {
   atualizarPerfilSetor,
 } from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { alertar } from '../utils/alerta';
 
 export default function DetalhesColaboradorScreen() {
   const navigation = useNavigation<any>();
@@ -83,7 +83,7 @@ export default function DetalhesColaboradorScreen() {
         setPermissoes(permissoes);
       } catch (error: any) {
         console.log('Erro ao carregar permissões:', error);
-        Alert.alert('Erro', error.message || 'Não foi possível carregar as permissões.');
+        alertar('Erro', error.message || 'Não foi possível carregar as permissões.');
       } finally {
         setCarregandoPermissoes(false);
       }
@@ -107,11 +107,11 @@ export default function DetalhesColaboradorScreen() {
   const handleSalvar = async () => {
     try {
       await salvarPermissoesColaborador(colaborador?.id, permissoes);
-      Alert.alert('Sucesso', 'Permissões salvas com sucesso!');
+      alertar('Sucesso', 'Permissões salvas com sucesso!');
       navigation.goBack();
     } catch (error: any) {
       console.log('Erro ao salvar permissões:', error);
-      Alert.alert('Erro', error.message || 'Não foi possível salvar as permissões.');
+      alertar('Erro', error.message || 'Não foi possível salvar as permissões.');
     }
   };
 
@@ -123,10 +123,10 @@ export default function DetalhesColaboradorScreen() {
 
       // Alterna o status localmente para refletir na hora na tela
       setStatusAtual(isInativo ? 'Ativo' : 'Inativo');
-      Alert.alert('Sucesso', dados.mensagem);
+      alertar('Sucesso', dados.mensagem);
     } catch (error: any) {
       console.log('Erro de conexão:', error);
-      Alert.alert('Erro', error.message || 'Falha ao conectar com o servidor.');
+      alertar('Erro', error.message || 'Falha ao conectar com o servidor.');
     }
   };
 
