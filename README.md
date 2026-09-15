@@ -1,11 +1,12 @@
 # Sistema de Gestão da Qualidade — Grupo Setti
 
-Aplicativo mobile (React Native + Expo + TypeScript) com back-end próprio
-(Node.js + Express + SQLite). Projeto desenvolvido por etapas.
+Aplicativo web (React Native + Expo + TypeScript, rodando como PWA no
+navegador) com back-end no **Supabase** (Postgres + Auth + Storage). Projeto
+desenvolvido por etapas.
 
-> **Etapa atual (Grupo 1):** Autenticação (Login e Cadastro) + Navegação por
-> abas com as telas **Início**, **Busca**, **Favoritos** e **Mais**, todas
-> conectadas a uma **API real** com banco de dados.
+> **Etapa atual (Grupo 1):** Autenticação (Login e Primeiro acesso) +
+> Navegação por abas com as telas **Início**, **Busca**, **Favoritos** e
+> **Mais**, todas conectadas ao Supabase.
 
 ---
 
@@ -13,107 +14,129 @@ Aplicativo mobile (React Native + Expo + TypeScript) com back-end próprio
 
 ```
 sistema-gestao-qualidade/
-├── app/         → Aplicativo mobile (Expo + TypeScript)
-└── backend/     → API REST (Node.js + Express + SQLite)
+├── app/                → Aplicativo (Expo + TypeScript), publicado como site/PWA
+├── supabase/
+│   ├── migrations/      → Schema do banco (tabelas, RLS, triggers) — rodar no SQL Editor
+│   └── functions/       → Edge Function usada para cadastrar colaboradores
+└── backend/             → (Descontinuado) API Express + SQLite antiga, mantida só de referência local
 ```
 
-- **app/** — o que roda no celular/emulador.
-- **backend/** — a API que guarda usuários e registros num banco SQLite
-  (um único arquivo `database.sqlite`).
-
-O app conversa com o back-end pela rede local.
+O app fala **direto com o Supabase** (`@supabase/supabase-js`) — não existe
+mais um servidor próprio para hospedar. A pasta `backend/` não é mais usada
+em produção.
 
 ---
 
-## 2. Pré-requisitos (instalar uma vez)
+## 2. Como colocar no ar (produção)
 
-1. **Node.js LTS 18+** — https://nodejs.org
-2. App **Expo Go** no celular (Play Store / App Store) **ou** um
-   emulador Android (Android Studio) / simulador iOS (Xcode, só no Mac).
+### Passo A — Banco de dados (Supabase)
 
----
+1. Abra o projeto Supabase (`setti-qualidade`) → **SQL Editor** → New query.
+2. Cole o conteúdo de `supabase/migrations/0001_schema_inicial.sql` inteiro e
+   rode. Isso cria as tabelas, as regras de acesso (RLS) e o bucket de
+   arquivos `anexos`.
+3. Crie o primeiro administrador (não existe mais tela de "Cadastro"
+   público — só um admin pode criar os demais acessos):
+   - **Authentication > Users > Add user**: preencha e-mail e senha, marque
+     **Auto Confirm User**.
+   - No **SQL Editor**, rode (trocando o e-mail):
+     ```sql
+     update public.profiles
+     set perfil = 'Administrador', status = 'Ativo'
+     where email = 'seu-email@empresa.com';
+     ```
+   - Pronto: esse login já entra no app como administrador e pode cadastrar
+     os demais colaboradores pela tela "Gestão de colaboradores".
 
-## 3. Como rodar (passo a passo)
+### Passo B — Edge Function (cadastro de colaboradores)
 
-O projeto tem **duas partes que rodam ao mesmo tempo**: primeiro o back-end,
-depois o app. Use **dois terminais**.
+O cadastro de novos colaboradores (feito pelo administrador, dentro do app)
+precisa de uma função de borda porque cria um login novo no Supabase Auth.
 
-### Passo A — Back-end (API)
+Com a [Supabase CLI](https://supabase.com/docs/guides/cli) instalada e
+logada (`supabase login`, depois `supabase link --project-ref SEU_PROJECT_REF`):
 
 ```bash
-cd backend
-npm install        # instala as dependências (só na 1ª vez)
-npm run seed       # cria o banco e insere dados de exemplo (só na 1ª vez)
-npm start          # inicia a API em http://localhost:3000
+supabase functions deploy cadastrar-colaborador
 ```
 
-Deixe esse terminal aberto. Para testar se subiu, acesse
-`http://localhost:3000` no navegador.
+Sem CLI: cole o conteúdo de `supabase/functions/cadastrar-colaborador/index.ts`
+direto em **Edge Functions > Create a new function** no painel do Supabase.
 
-### Passo B — Aplicativo
+### Passo C — Pegar as chaves do Supabase
 
-Abra **outro terminal**:
+Em **Project Settings > API**, copie:
+- **Project URL**
+- **anon public key**
+
+### Passo D — Publicar o site (Vercel)
+
+1. Crie uma conta na [Vercel](https://vercel.com) (dá pra logar com a conta
+   do GitHub) e clique em **Add New > Project**, escolhendo o repositório
+   `eduardawelter997/sistema-gestao-qualidade`.
+2. Configure:
+   - **Root Directory**: `app`
+   - **Build Command**: `npm run build:web`
+   - **Output Directory**: `dist`
+3. Em **Environment Variables**, adicione (com os valores do Passo C):
+   - `EXPO_PUBLIC_SUPABASE_URL`
+   - `EXPO_PUBLIC_SUPABASE_ANON_KEY`
+4. Deploy. A Vercel gera um link (tipo
+   `https://sistema-gestao-qualidade.vercel.app`) — esse é o link pra
+   compartilhar com quem for usar o app.
+5. Cada push na branch `main` gera um novo deploy automaticamente.
+
+### Passo E — Usar no celular
+
+Abra o link no navegador do celular (Chrome no Android, Safari no iPhone) e:
+- **Android (Chrome)**: menu (⋮) > "Adicionar à tela inicial" / "Instalar app".
+- **iPhone (Safari)**: botão de compartilhar (□↑) > "Adicionar à Tela de Início".
+
+O app abre em tela cheia, como um aplicativo instalado.
+
+---
+
+## 3. Como rodar localmente (desenvolvimento)
 
 ```bash
 cd app
-npm install        # instala as dependências (só na 1ª vez)
-npm start          # inicia o Expo
+npm install
+cp .env.example .env      # preencha com a URL e a anon key do Supabase
+npm start
 ```
 
 Depois:
-
-- **Emulador Android:** pressione `a` no terminal.
+- **Navegador:** pressione `w` no terminal (ou `npm run web`).
+- **Emulador Android:** pressione `a`.
 - **Simulador iOS (Mac):** pressione `i`.
 - **Celular físico:** abra o **Expo Go** e escaneie o QR Code.
 
-### Passo C — Apontar o app para a API (importante!)
-
-Abra `app/src/config/api.ts` e escolha a URL certa conforme onde vai testar:
-
-| Onde você testa           | URL a usar                       |
-|---------------------------|----------------------------------|
-| Emulador Android          | `http://10.0.2.2:3000`           |
-| Simulador iOS (Mac)       | `http://localhost:3000`          |
-| Celular físico (Expo Go)  | `http://SEU_IP_LOCAL:3000`       |
-
-Para descobrir seu IP local: `ipconfig` (Windows) ou `ifconfig` / `ip a`
-(Mac/Linux). O celular e o PC precisam estar na **mesma rede Wi-Fi**.
+Não é mais necessário rodar nenhum back-end local — o app conecta direto no
+Supabase configurado no `.env`.
 
 ---
 
-## 4. Usuário de teste
+## 4. O que já funciona nesta etapa
 
-O comando `npm run seed` cria um usuário pronto para login:
+- **Login / Primeiro acesso** via Supabase Auth. Sessão salva no dispositivo
+  (não precisa logar toda vez).
+- **Recuperação de senha** por e-mail (link enviado pelo Supabase).
+- **Início (Dashboard):** números da "Visão geral" e registros recentes.
+- **Busca:** pesquisa por texto e filtro por tipo (OP, Ocorrência, Ações).
+- **Favoritos:** marcar/desmarcar registros com estrela.
+- **Mais:** perfil do usuário logado, gestão de colaboradores (admin) e menu
+  de navegação.
 
-- **E-mail:** `carlos@setti.com`
-- **Senha:** `123456`
-
-Você também pode criar uma conta nova pela tela de **Cadastro** — ela grava
-de verdade no banco.
-
----
-
-## 5. O que já funciona nesta etapa
-
-- **Login / Cadastro** reais: senha criptografada (bcrypt) e autenticação por
-  token (JWT). O login fica salvo no aparelho (não precisa logar toda vez).
-- **Início (Dashboard):** números da "Visão geral" e registros recentes vindos
-  da API.
-- **Busca:** pesquisa por texto e filtro por tipo (OP, Ocorrência, Ações),
-  consultando o banco em tempo real.
-- **Favoritos:** marcar/desmarcar registros com estrela — a mudança é gravada
-  no banco.
-- **Mais:** perfil do usuário logado e menu de navegação. Sair do app.
-
-## 6. Próximas etapas (a desenvolver)
+## 5. Próximas etapas (a desenvolver)
 
 Fluxos de registro (Nova OP, Detalhes da OP, Nova ocorrência, Recebimento),
 Gestão de funcionários e Indicadores gerenciais.
 
 ---
 
-## 7. Tecnologias
+## 6. Tecnologias
 
-**App:** React Native, Expo (SDK 51), TypeScript, React Navigation
-(abas + pilha), AsyncStorage.
-**Back-end:** Node.js, Express, SQLite (better-sqlite3), JWT, bcryptjs.
+**App:** React Native, Expo (SDK 51, exportado como web/PWA), TypeScript,
+React Navigation (abas + pilha), `@supabase/supabase-js`.
+**Banco/Backend:** Supabase (Postgres, Auth, Storage, Row Level Security,
+Edge Functions).

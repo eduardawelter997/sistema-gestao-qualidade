@@ -11,8 +11,13 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { colors } from '../theme/colors';
-import { API_URL } from '../config/api';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import {
+  buscarPermissoesColaborador,
+  salvarPermissoesColaborador,
+  desativarColaborador,
+  ativarColaborador,
+  atualizarPerfilSetor,
+} from '../services/api';
 import { useAuth } from '../context/AuthContext';
 
 export default function DetalhesColaboradorScreen() {
@@ -74,27 +79,11 @@ export default function DetalhesColaboradorScreen() {
   useEffect(() => {
     async function carregarPermissoes() {
       try {
-        const token = await AsyncStorage.getItem('@gestao_qualidade:token');
-
-        const resposta = await fetch(
-          `${API_URL}/api/auth/permissoes/${colaborador?.id}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-
-        const dados = await resposta.json();
-
-        if (!resposta.ok) {
-          throw new Error(dados.erro || 'Não foi possível carregar as permissões.');
-        }
-
-        setPermissoes(dados.permissoes);
-      } catch (error) {
+        const { permissoes } = await buscarPermissoesColaborador(colaborador?.id);
+        setPermissoes(permissoes);
+      } catch (error: any) {
         console.log('Erro ao carregar permissões:', error);
-        Alert.alert('Erro', 'Não foi possível carregar as permissões.');
+        Alert.alert('Erro', error.message || 'Não foi possível carregar as permissões.');
       } finally {
         setCarregandoPermissoes(false);
       }
@@ -117,107 +106,33 @@ export default function DetalhesColaboradorScreen() {
 
   const handleSalvar = async () => {
     try {
-      const token = await AsyncStorage.getItem('@gestao_qualidade:token');
-
-      const resposta = await fetch(
-        `${API_URL}/api/auth/permissoes/${colaborador?.id}`,
-        {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(permissoes),
-        }
-      );
-
-      const dados = await resposta.json();
-
-      if (!resposta.ok) {
-        throw new Error(dados.erro || 'Não foi possível salvar as permissões.');
-      }
-
+      await salvarPermissoesColaborador(colaborador?.id, permissoes);
       Alert.alert('Sucesso', 'Permissões salvas com sucesso!');
       navigation.goBack();
-    } catch (error) {
+    } catch (error: any) {
       console.log('Erro ao salvar permissões:', error);
-      Alert.alert('Erro', 'Não foi possível salvar as permissões.');
-    }
-  };
-
-  const handleDesativar = async () => {
-    console.log('Iniciando desativação direta para o ID:', colaborador?.id);
-
-    try {
-      const token = await AsyncStorage.getItem('@gestao_qualidade:token');
-      console.log('Token recuperado:', token ? 'OK' : 'Vazio');
-
-      const url = `${API_URL}/api/auth/desativar-colaborador/${colaborador?.id}`;
-      console.log('Chamando URL:', url);
-
-      const resposta = await fetch(url, {
-        method: 'PATCH',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-
-      const dados = await resposta.json();
-      console.log('Resposta completa do servidor:', dados);
-
-      if (resposta.ok) {
-        Alert.alert('Sucesso', 'Colaborador desativado com sucesso.');
-        navigation.goBack();
-      } else {
-        Alert.alert('Erro', dados.erro || 'Não foi possível desativar o colaborador.');
-      }
-    } catch (error) {
-      console.log('Erro de conexão catch:', error);
-      Alert.alert('Erro', 'Falha ao conectar com o servidor.');
+      Alert.alert('Erro', error.message || 'Não foi possível salvar as permissões.');
     }
   };
 
   const handleAlternarStatus = async () => {
-    const novaAcao = isInativo ? 'ativar' : 'desativar';
-    const endpoint = `${API_URL}/api/auth/${novaAcao}-colaborador/${colaborador?.id}`;
-
     try {
-      const token = await AsyncStorage.getItem('@gestao_qualidade:token');
+      const dados = isInativo
+        ? await ativarColaborador(colaborador?.id)
+        : await desativarColaborador(colaborador?.id);
 
-      const resposta = await fetch(endpoint, {
-        method: 'PATCH',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-
-      const dados = await resposta.json();
-
-      if (resposta.ok) {
-        // Alterna o status localmente para refletir na hora na tela
-        setStatusAtual(isInativo ? 'Ativo' : 'Inativo');
-        Alert.alert('Sucesso', dados.mensagem);
-      } else {
-        Alert.alert('Erro', dados.erro || 'Não foi possível alterar o status.');
-      }
-    } catch (error) {
+      // Alterna o status localmente para refletir na hora na tela
+      setStatusAtual(isInativo ? 'Ativo' : 'Inativo');
+      Alert.alert('Sucesso', dados.mensagem);
+    } catch (error: any) {
       console.log('Erro de conexão:', error);
-      Alert.alert('Erro', 'Falha ao conectar com o servidor.');
+      Alert.alert('Erro', error.message || 'Falha ao conectar com o servidor.');
     }
   };
 
   const salvarAlteracaoPerfilSetor = async (novoPerfil: string, novoSetor: string) => {
     try {
-      const token = await AsyncStorage.getItem('@gestao_qualidade:token');
-
-      await fetch(`${API_URL}/api/auth/atualizar-perfil-setor/${colaborador?.id}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify({ perfil: novoPerfil, setor: novoSetor }),
-      });
+      await atualizarPerfilSetor(colaborador?.id, novoPerfil, novoSetor);
 
       if (colaborador) {
         colaborador.perfil = novoPerfil;

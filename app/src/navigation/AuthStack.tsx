@@ -9,8 +9,6 @@ import { AuthStackParamList } from './types';
 import LoginScreen from '../screens/LoginScreen';
 import PrimeiroAcessoScreen from '../screens/PrimeiroAcessoScreen';
 import RecuperarSenhaScreen from '../screens/RecuperarSenhaScreen';
-import VerificarCodigoScreen from '../screens/VerificarCodigoScreen';
-import RedefinirSenhaScreen from '../screens/RedefinirSenhaScreen';
 import AlterarSenhaScreen from '../screens/AlterarSenhaScreen';
 
 const Stack = createNativeStackNavigator<AuthStackParamList>();
@@ -24,8 +22,6 @@ export default function AuthStack() {
       <Stack.Screen name="Login" component={LoginScreen} />
       <Stack.Screen name="PrimeiroAcesso" component={PrimeiroAcessoScreen} />
       <Stack.Screen name="RecuperarSenha" component={RecuperarSenhaScreen} />
-      <Stack.Screen name="VerificarCodigo" component={VerificarCodigoScreen} />
-      <Stack.Screen name="RedefinirSenha" component={RedefinirSenhaScreen} />
       <Stack.Screen name="AlterarSenha" component={AlterarSenhaScreen} />
     </Stack.Navigator>
   );

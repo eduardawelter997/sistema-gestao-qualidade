@@ -8,25 +8,40 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 
 import { colors } from '../theme/colors';
 import { AuthStackParamList } from '../navigation/types';
+import { solicitarRecuperacaoSenha } from '../services/api';
 import { alertar } from '../utils/alerta';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'RecuperarSenha'>;
 
 export default function RecuperarSenhaScreen({ navigation }: Props) {
   const [email, setEmail] = useState('');
+  const [carregando, setCarregando] = useState(false);
 
-  function handleContinuar() {
+  async function handleContinuar() {
     if (!email) {
       alertar('Atenção', 'Digite seu e-mail.');
       return;
     }
-    navigation.navigate('VerificarCodigo', { email });
+    setCarregando(true);
+    try {
+      await solicitarRecuperacaoSenha(email);
+      alertar(
+        'Verifique seu e-mail',
+        'Se este e-mail estiver cadastrado, enviamos um link para redefinir sua senha.'
+      );
+      navigation.navigate('Login');
+    } catch (e: any) {
+      alertar('Erro', e.message);
+    } finally {
+      setCarregando(false);
+    }
   }
 
   return (
@@ -48,7 +63,7 @@ export default function RecuperarSenhaScreen({ navigation }: Props) {
 
           <Text style={styles.title}>Recuperar senha</Text>
           <Text style={styles.subtitle}>
-            Digite seu e-mail para continuar com o código de recuperação
+            Digite seu e-mail para receber um link de recuperação de senha
           </Text>
 
           <Text style={styles.label}>E-mail:</Text>
@@ -63,8 +78,12 @@ export default function RecuperarSenhaScreen({ navigation }: Props) {
             onChangeText={setEmail}
           />
 
-          <TouchableOpacity style={styles.button} onPress={handleContinuar}>
-            <Text style={styles.buttonText}>Continuar</Text>
+          <TouchableOpacity style={styles.button} onPress={handleContinuar} disabled={carregando}>
+            {carregando ? (
+              <ActivityIndicator color={colors.textDark} />
+            ) : (
+              <Text style={styles.buttonText}>Continuar</Text>
+            )}
           </TouchableOpacity>
 
           <View style={styles.loginRow}>

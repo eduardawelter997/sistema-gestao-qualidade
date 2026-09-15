@@ -5,8 +5,6 @@ export type AuthStackParamList = {
   Login: undefined;
   PrimeiroAcesso: undefined;
   RecuperarSenha: undefined;
-  VerificarCodigo: { email: string };
-  RedefinirSenha: { email: string; codigo: string };
   AlterarSenha: undefined;
 };
 

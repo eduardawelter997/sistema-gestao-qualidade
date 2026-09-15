@@ -5,6 +5,7 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
+    "icon": "./assets/icon.png",
     "splash": {
       "resizeMode": "contain",
       "backgroundColor": "#1E5A8E"
@@ -14,7 +15,19 @@
       "supportsTablet": true
     },
     "android": {
-      "package": "com.exemplo.gestaoqualidade"
+      "package": "com.exemplo.gestaoqualidade",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#1E5A8E"
+      }
+    },
+    "web": {
+      "favicon": "./assets/favicon.png",
+      "themeColor": "#1E5A8E",
+      "backgroundColor": "#1E5A8E",
+      "display": "standalone",
+      "name": "Gestão da Qualidade",
+      "shortName": "GQ Setti"
     }
   }
 }

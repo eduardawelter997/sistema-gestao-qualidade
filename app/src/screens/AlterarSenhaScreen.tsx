@@ -10,9 +10,9 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import Header from '../components/Header';
 import { colors } from '../theme/colors';
+import { alterarSenha } from '../services/api';
 
 export default function AlterarSenhaScreen() {
   const navigation = useNavigation<any>();
@@ -38,36 +38,20 @@ export default function AlterarSenhaScreen() {
 
     try {
       setCarregando(true);
-      const token = await AsyncStorage.getItem('@gestao_qualidade:token');
+      const dados = await alterarSenha(senhaAtual, novaSenha);
 
-      const resposta = await fetch('http://localhost:3000/api/auth/senha', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify({ senhaAtual, novaSenha }),
-      });
+      setSenhaAtual('');
+      setNovaSenha('');
+      setConfirmarSenha('');
 
-      const dados = await resposta.json();
-
-      if (resposta.ok) {
-        setSenhaAtual('');
-        setNovaSenha('');
-        setConfirmarSenha('');
-
-        Alert.alert(
-          'Sucesso', 
-          dados.mensagem || 'Senha alterada com sucesso!', 
-          [{ text: 'OK', onPress: () => navigation.goBack() }]
-        );
-      } else {
-        // Exibe a mensagem de erro direto na interface em vermelho
-        setMensagemErro(dados.erro || dados.message || 'Senha atual incorreta.');
-      }
-    } catch (error) {
+      Alert.alert(
+        'Sucesso',
+        dados.mensagem || 'Senha alterada com sucesso!',
+        [{ text: 'OK', onPress: () => navigation.goBack() }]
+      );
+    } catch (error: any) {
       console.log('Erro ao alterar senha:', error);
-      setMensagemErro('Falha ao conectar com o servidor.');
+      setMensagemErro(error.message || 'Falha ao conectar com o servidor.');
     } finally {
       setCarregando(false);
     }

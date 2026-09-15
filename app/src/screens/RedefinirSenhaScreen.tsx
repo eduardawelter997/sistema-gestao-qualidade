@@ -1,3 +1,9 @@
+/**
+ * Tela mostrada depois que a pessoa clica no link de "esqueci minha senha"
+ * recebido por e-mail (o Supabase abre o app numa sessão temporária de
+ * recuperação — RootNavigator detecta isso e mostra esta tela direto, sem
+ * precisar de navegação/parâmetros).
+ */
 import React, { useState } from 'react';
 import {
   View,
@@ -11,17 +17,14 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { NativeStackScreenProps } from '@react-navigation/native-stack';
 
 import { colors } from '../theme/colors';
-import { AuthStackParamList } from '../navigation/types';
-import { redefinirSenhaComCodigo } from '../services/api';
+import { useAuth } from '../context/AuthContext';
+import { redefinirSenhaComSessaoRecuperacao } from '../services/api';
 import { alertar } from '../utils/alerta';
 
-type Props = NativeStackScreenProps<AuthStackParamList, 'RedefinirSenha'>;
-
-export default function RedefinirSenhaScreen({ navigation, route }: Props) {
-  const { email, codigo } = route.params;
+export default function RedefinirSenhaScreen() {
+  const { finalizarRecuperacaoSenha } = useAuth();
   const [novaSenha, setNovaSenha] = useState('');
   const [confirmarSenha, setConfirmarSenha] = useState('');
   const [carregando, setCarregando] = useState(false);
@@ -37,9 +40,9 @@ export default function RedefinirSenhaScreen({ navigation, route }: Props) {
     }
     setCarregando(true);
     try {
-      await redefinirSenhaComCodigo(email, codigo, novaSenha);
-      alertar('Sucesso', 'Senha redefinida com sucesso!');
-      navigation.navigate('Login');
+      await redefinirSenhaComSessaoRecuperacao(novaSenha);
+      alertar('Sucesso', 'Senha redefinida com sucesso! Entre com a nova senha.');
+      await finalizarRecuperacaoSenha();
     } catch (e: any) {
       alertar('Erro', e.message);
     } finally {
@@ -57,13 +60,6 @@ export default function RedefinirSenhaScreen({ navigation, route }: Props) {
           contentContainerStyle={styles.content}
           keyboardShouldPersistTaps="handled"
         >
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => navigation.goBack()}
-          >
-            <Text style={styles.backArrow}>←</Text>
-          </TouchableOpacity>
-
           <Text style={styles.title}>Redefinir senha</Text>
           <Text style={styles.subtitle}>Crie uma nova senha para acessar sua conta</Text>
 
@@ -100,8 +96,8 @@ export default function RedefinirSenhaScreen({ navigation, route }: Props) {
           </TouchableOpacity>
 
           <View style={styles.loginRow}>
-            <TouchableOpacity onPress={() => navigation.navigate('Login')}>
-              <Text style={styles.loginLink}>Voltar para Entrar</Text>
+            <TouchableOpacity onPress={finalizarRecuperacaoSenha}>
+              <Text style={styles.loginLink}>Cancelar e voltar para Entrar</Text>
             </TouchableOpacity>
           </View>
         </ScrollView>
@@ -113,9 +109,7 @@ export default function RedefinirSenhaScreen({ navigation, route }: Props) {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   flex: { flex: 1 },
-  content: { flexGrow: 1, paddingHorizontal: 24, paddingVertical: 16 },
-  backButton: { width: 40, height: 40, justifyContent: 'center' },
-  backArrow: { color: colors.white, fontSize: 26 },
+  content: { flexGrow: 1, justifyContent: 'center', paddingHorizontal: 24, paddingVertical: 16 },
   title: {
     fontSize: 24,
     fontWeight: 'bold',

@@ -18,7 +18,6 @@ import { Ionicons } from '@expo/vector-icons';
 import * as DocumentPicker from 'expo-document-picker';
 
 import { colors } from '../theme/colors';
-import { API_URL } from '../config/api';
 import { AppTabParamList } from '../navigation/types';
 import { Anexo, listarAnexos, enviarAnexo, excluirAnexo } from '../services/api';
 import { alertar, confirmar } from '../utils/alerta';
@@ -166,7 +165,7 @@ export default function FotosAnexosScreen() {
                         <Ionicons name="trash-outline" size={16} color={colors.danger} />
                       </TouchableOpacity>
                       {ehImagem ? (
-                        <Image source={{ uri: `${API_URL}${a.url}` }} style={styles.itemImagem} />
+                        <Image source={{ uri: a.url }} style={styles.itemImagem} />
                       ) : (
                         <View style={styles.itemDocumento}>
                           <Ionicons name="document-text-outline" size={32} color={colors.primary} />

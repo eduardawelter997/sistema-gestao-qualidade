@@ -22,7 +22,6 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 
 import { colors } from '../theme/colors';
-import { API_URL } from '../config/api';
 import StatusBadge from '../components/StatusBadge';
 import { AppTabParamList } from '../navigation/types';
 import {
@@ -58,7 +57,7 @@ function LinhaFotos({ anexos }: { anexos: Anexo[] }) {
   return (
     <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.fotosLinha}>
       {anexos.map((a) => (
-        <Image key={a.id} source={{ uri: `${API_URL}${a.url}` }} style={styles.foto} />
+        <Image key={a.id} source={{ uri: a.url }} style={styles.foto} />
       ))}
     </ScrollView>
   );

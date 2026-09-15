@@ -10,9 +10,9 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import Header from '../components/Header';
 import { colors } from '../theme/colors';
+import { buscarPerfil, atualizarMeuPerfil } from '../services/api';
 
 export default function PerfilScreen() {
   const navigation = useNavigation<any>();
@@ -29,23 +29,11 @@ export default function PerfilScreen() {
 
   const carregarDadosUsuario = async () => {
     try {
-      const token = await AsyncStorage.getItem('@gestao_qualidade:token');
-      
-      const resposta = await fetch('http://localhost:3000/api/auth/me', {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-
-      const dados = await resposta.json();
-
-      if (resposta.ok && dados.usuario) {
-        setNome(dados.usuario.nome || '');
-        setEmail(dados.usuario.email || '');
-        setPerfil(dados.usuario.perfil || 'Não informado');
-        setSetor(dados.usuario.setor || 'Não informado');
-      }
+      const { usuario } = await buscarPerfil();
+      setNome(usuario.nome || '');
+      setEmail(usuario.email || '');
+      setPerfil(usuario.perfil || 'Não informado');
+      setSetor(usuario.setor || 'Não informado');
     } catch (error) {
       console.log('Erro ao carregar dados do perfil:', error);
     }
@@ -59,27 +47,11 @@ export default function PerfilScreen() {
 
     try {
       setCarregando(true);
-      const token = await AsyncStorage.getItem('@gestao_qualidade:token');
-
-      const resposta = await fetch('http://localhost:3000/api/auth/me', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify({ nome, email }),
-      });
-
-      const dados = await resposta.json();
-
-      if (resposta.ok) {
-        Alert.alert('Sucesso', dados.mensagem || 'Alterações salvas com sucesso!');
-      } else {
-        Alert.alert('Erro', dados.erro || 'Não foi possível salvar as alterações.');
-      }
-    } catch (error) {
+      const dados = await atualizarMeuPerfil(nome, email);
+      Alert.alert('Sucesso', dados.mensagem || 'Alterações salvas com sucesso!');
+    } catch (error: any) {
       console.log('Erro ao salvar alterações:', error);
-      Alert.alert('Erro', 'Falha ao conectar com o servidor.');
+      Alert.alert('Erro', error.message || 'Não foi possível salvar as alterações.');
     } finally {
       setCarregando(false);
     }

@@ -11,8 +11,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { colors } from '../theme/colors';
-import { API_URL } from '../config/api';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { cadastrarColaborador } from '../services/api';
 
 export default function ConvidarColaboradorScreen() {
   const navigation = useNavigation<any>();
@@ -61,49 +60,20 @@ export default function ConvidarColaboradorScreen() {
     }
 
     try {
-      const token = await AsyncStorage.getItem('@gestao_qualidade:token');
+      await cadastrarColaborador({ nome, email, senha, perfil, setor });
 
-      const novoUsuarioLogin = {
-        tipo: 'colaborador',
-        titulo: nome,
-        email: email,
-        senha: senha,
-        descricao: `${perfil} | Setor: ${setor}`,
-        status: 'Ativo',
-        iniciais: nome.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase(),
-      };
+      // Limpa os campos do formulário antes de sair
+      setNome('');
+      setEmail('');
+      setSenha('');
+      setPerfil('');
+      setSetor('');
 
-      const resposta = await fetch(`${API_URL}/api/auth/cadastrar-colaborador`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-        nome,
-        email,
-        senha,
-        perfil,
-        setor,
-        }),
-      });
-
-      if (resposta.ok) {
-        // Limpa os campos do formulário antes de sair
-        setNome('');
-        setEmail('');
-        setSenha('');
-        setPerfil('');
-        setSetor('');
-
-        Alert.alert('Sucesso', 'Acesso do colaborador cadastrado com sucesso!');
-        navigation.navigate('GestaoColaboradores');
-      } else {
-        Alert.alert('Erro', 'O servidor recusou o cadastro do acesso.');
-      }
-    } catch (error) {
-      console.log('Erro ao conectar com a API:', error);
-      Alert.alert('Erro', 'Não foi possível conectar ao servidor.');
+      Alert.alert('Sucesso', 'Acesso do colaborador cadastrado com sucesso!');
+      navigation.navigate('GestaoColaboradores');
+    } catch (error: any) {
+      console.log('Erro ao cadastrar colaborador:', error);
+      Alert.alert('Erro', error.message || 'Não foi possível cadastrar o colaborador.');
     }
   };
 

@@ -10,10 +10,9 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import Header from '../components/Header';
 import { colors } from '../theme/colors';
-import { API_URL } from '../config/api';
+import { listarColaboradores } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 
 export default function GestaoColaboradoresScreen() {
@@ -35,25 +34,11 @@ export default function GestaoColaboradoresScreen() {
   const buscarColaboradores = async () => {
     try {
       setCarregando(true);
-      const token = await AsyncStorage.getItem('@gestao_qualidade:token');
-
-      const resposta = await fetch(`${API_URL}/api/auth/colaboradores`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-
-      const dados = await resposta.json();
-
-      if (resposta.ok) {
-        setColaboradores(dados.colaboradores || []);
-      } else {
-        Alert.alert('Erro', dados.erro || 'Não foi possível carregar os colaboradores.');
-      }
-    } catch (error) {
+      const { colaboradores } = await listarColaboradores();
+      setColaboradores(colaboradores || []);
+    } catch (error: any) {
       console.log('Erro ao buscar colaboradores:', error);
-      Alert.alert('Erro', 'Falha na conexão com o servidor.');
+      Alert.alert('Erro', error.message || 'Falha na conexão com o servidor.');
     } finally {
       setCarregando(false);
     }
