@@ -107,11 +107,6 @@ export default function LoginScreen({ navigation }: Props) {
           <TouchableOpacity onPress={() => navigation.navigate('RecuperarSenha')}>
             <Text style={styles.forgotText}>Esqueci minha senha</Text>
           </TouchableOpacity>
-
-          {/* Dica do usuário de teste (criado pelo seed do back-end) */}
-          <Text style={styles.dica}>
-            Usuário de teste: anselmosetti@gmail.com / 123456
-          </Text>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -175,11 +170,5 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     textAlign: 'center',
     marginTop: 24,
-  },
-  dica: {
-    color: 'rgba(255,255,255,0.7)',
-    fontSize: 12,
-    textAlign: 'center',
-    marginTop: 20,
   },
 });
