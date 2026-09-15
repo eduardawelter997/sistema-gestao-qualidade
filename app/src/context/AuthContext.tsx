@@ -73,7 +73,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUsuario(null);
         return;
       }
-      if (session) {
+      // SIGNED_IN já é tratado direto por entrar()/ativarAcesso() (que
+      // conferem o status da conta e chamam setUsuario sozinhos). Reagir de
+      // novo aqui cria uma corrida: as duas checagens de status rodam ao
+      // mesmo tempo e, pra uma conta Pendente/Inativa, as duas tentam
+      // encerrar a sessão simultaneamente — uma delas some com a sessão no
+      // meio da outra ainda estar buscando o perfil, e o login termina com
+      // um erro genérico de "não foi possível carregar o perfil" em vez da
+      // mensagem certa.
+      if (session && evento !== 'SIGNED_IN') {
         await carregarUsuarioDaSessao();
       }
     });
