@@ -195,7 +195,6 @@ export default function IndicadoresScreen() {
                   onChangeText={setDataInicio}
                   placeholder="DD/MM/AAAA"
                 />
-                <Ionicons name="calendar-outline" size={16} color={colors.textSecondary} />
               </View>
             </View>
 
@@ -208,7 +207,6 @@ export default function IndicadoresScreen() {
                   onChangeText={setDataFim}
                   placeholder="DD/MM/AAAA"
                 />
-                <Ionicons name="calendar-outline" size={16} color={colors.textSecondary} />
               </View>
             </View>
           </View>
