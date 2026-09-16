@@ -346,7 +346,22 @@ export async function listarRegistros(tipo = 'todos', q = ''): Promise<{ registr
   }
   if (q) {
     const like = `%${q}%`;
-    query = query.or(`codigo.ilike.${like},titulo.ilike.${like},descricao.ilike.${like}`);
+    const condicoes = [`codigo.ilike.${like}`, `titulo.ilike.${like}`, `descricao.ilike.${like}`];
+
+    // O nome do cliente/fornecedor fica no cadastro dele, não no próprio
+    // registro (que só guarda o cliente_fornecedor_id) — sem isso, buscar
+    // por "Aços Minas" nunca encontrava as OPs/recebimentos desse fornecedor.
+    const { data: relacionados } = await supabase
+      .from('registros')
+      .select('id')
+      .in('tipo', ['cliente', 'fornecedor'])
+      .ilike('titulo', like);
+    const idsClienteFornecedor = (relacionados ?? []).map((r: any) => r.id);
+    if (idsClienteFornecedor.length > 0) {
+      condicoes.push(`cliente_fornecedor_id.in.(${idsClienteFornecedor.join(',')})`);
+    }
+
+    query = query.or(condicoes.join(','));
   }
 
   const { data, error } = await query.order('id', { ascending: false });
@@ -629,7 +644,16 @@ const TIPOS_CANONICOS = [
   { valor: 'recebimento', rotulo: 'Recebimento' },
 ];
 
-const SETORES_CANONICOS = ['Produção', 'Qualidade', 'Almoxarifado', 'Laminação', 'Corte', 'Acabamento'];
+const SETORES_CANONICOS = [
+  'Produção',
+  'Qualidade',
+  'Almoxarifado',
+  'Fundição',
+  'Usinagem',
+  'Banca',
+  'Desenvolvimento',
+  'Administrativo',
+];
 
 // "DD/MM/AAAA" -> "AAAA-MM-DD" (mesma conversão que o backend antigo fazia)
 function converterDataBR(data?: string): string {

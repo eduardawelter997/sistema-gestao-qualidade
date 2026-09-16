@@ -344,7 +344,7 @@ create policy anexos_delete on public.anexos
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 values (
   'anexos', 'anexos', true, 5242880,
-  array['image/jpeg', 'image/png', 'image/webp', 'application/pdf']
+  array['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif', 'application/pdf']
 )
 on conflict (id) do nothing;
 

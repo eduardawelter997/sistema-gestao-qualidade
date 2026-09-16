@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -9,7 +9,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { listarClientesFornecedores } from '../services/api';
 import Header from '../components/Header';
 import { colors } from '../theme/colors';
@@ -21,9 +21,14 @@ export default function ClientesFornecedoresScreen() {
   const [itens, setItens] = useState<any[]>([]);
   const [carregando, setCarregando] = useState(true);
 
-  useEffect(() => {
-    carregarDados();
-  }, []);
+  // Tela fica registrada como "aba escondida" (não desmonta ao voltar), por
+  // isso usa useFocusEffect em vez de useEffect — sem isso a lista só
+  // atualizava reabrindo o app inteiro depois de cadastrar um novo item.
+  useFocusEffect(
+    useCallback(() => {
+      carregarDados();
+    }, [])
+  );
 
   const carregarDados = async () => {
   try {

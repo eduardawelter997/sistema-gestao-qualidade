@@ -45,12 +45,14 @@ const TIPOS_OCORRENCIA = [
 ];
 
 const SETORES_PROCESSOS = [
-  { valor: 'Produção', rotulo: 'Produção - Setor' },
-  { valor: 'Qualidade', rotulo: 'Qualidade - Setor' },
-  { valor: 'Almoxarifado', rotulo: 'Almoxarifado - Setor' },
-  { valor: 'Laminação', rotulo: 'Laminação - Processo' },
-  { valor: 'Corte', rotulo: 'Corte - Processo' },
-  { valor: 'Acabamento', rotulo: 'Acabamento - Processo' },
+  { valor: 'Produção', rotulo: 'Produção' },
+  { valor: 'Qualidade', rotulo: 'Qualidade' },
+  { valor: 'Almoxarifado', rotulo: 'Almoxarifado' },
+  { valor: 'Fundição', rotulo: 'Fundição' },
+  { valor: 'Usinagem', rotulo: 'Usinagem' },
+  { valor: 'Banca', rotulo: 'Banca' },
+  { valor: 'Desenvolvimento', rotulo: 'Desenvolvimento' },
+  { valor: 'Administrativo', rotulo: 'Administrativo' },
 ];
 
 function dataDeHoje() {
