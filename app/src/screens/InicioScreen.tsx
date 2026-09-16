@@ -43,16 +43,23 @@ function CartaoIndicador({
   titulo,
   valor,
   cor,
+  onPress,
 }: {
   titulo: string;
   valor: number;
   cor: string;
+  onPress?: () => void;
 }) {
   return (
-    <View style={styles.indicador}>
+    <TouchableOpacity
+      style={styles.indicador}
+      activeOpacity={onPress ? 0.7 : 1}
+      disabled={!onPress}
+      onPress={onPress}
+    >
       <Text style={[styles.indicadorValor, { color: cor }]}>{valor}</Text>
       <Text style={styles.indicadorTitulo}>{titulo}</Text>
-    </View>
+    </TouchableOpacity>
   );
 }
 
@@ -162,11 +169,17 @@ export default function InicioScreen() {
                 titulo="OPs em andamento"
                 valor={dados.overview.opsEmAndamento}
                 cor={colors.primary}
+                onPress={() =>
+                  navigation.navigate('Busca', { tipoInicial: 'op', statusInicial: 'Em andamento' })
+                }
               />
               <CartaoIndicador
                 titulo="Ocorrências abertas"
                 valor={dados.overview.ocorrenciasAbertas}
                 cor="#9A6700"
+                onPress={() =>
+                  navigation.navigate('Busca', { tipoInicial: 'ocorrencia', statusInicial: 'Aberta' })
+                }
               />
             </View>
             <View style={styles.grid}>
@@ -174,11 +187,17 @@ export default function InicioScreen() {
                 titulo="Ações atrasadas"
                 valor={dados.overview.acoesAtrasadas}
                 cor="#C53030"
+                onPress={() =>
+                  navigation.navigate('Busca', { tipoInicial: 'acao', statusInicial: 'Atrasada' })
+                }
               />
               <CartaoIndicador
                 titulo="Aguardando avaliação"
                 valor={dados.overview.aguardandoAvaliacao}
                 cor="#5B4BC4"
+                onPress={() =>
+                  navigation.navigate('Busca', { tipoInicial: 'todos', statusInicial: 'Aguardando avaliação' })
+                }
               />
             </View>
 

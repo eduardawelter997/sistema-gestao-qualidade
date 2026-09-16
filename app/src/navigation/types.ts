@@ -9,7 +9,7 @@ export type AuthStackParamList = {
 
 export type AppTabParamList = {
   Inicio: undefined;
-  Busca: undefined;
+  Busca: { tipoInicial?: string; statusInicial?: string } | undefined;
   Favoritos: undefined;
   Mais: undefined;
   NovaOp: undefined;

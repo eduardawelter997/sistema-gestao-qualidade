@@ -15,10 +15,12 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 
 import Header from '../components/Header';
 import RegistroCard from '../components/RegistroCard';
 import { colors } from '../theme/colors';
+import { AppTabParamList } from '../navigation/types';
 import {
   listarRegistros,
   listarClientesFornecedores,
@@ -36,8 +38,12 @@ const FILTROS = [
 ];
 
 export default function BuscaScreen() {
+  const navigation = useNavigation<any>();
+  const route = useRoute<RouteProp<AppTabParamList, 'Busca'>>();
+
   const [busca, setBusca] = useState('');
   const [filtro, setFiltro] = useState('todos');
+  const [statusFiltro, setStatusFiltro] = useState<string | null>(null);
   const [registros, setRegistros] = useState<Registro[]>([]);
   const [carregando, setCarregando] = useState(false);
 
@@ -52,17 +58,28 @@ export default function BuscaScreen() {
       .catch(() => setListaClientes([]));
   }, []);
 
+  // Chegando da tela Início (card da Visão geral) com um tipo/status pra
+  // já abrir filtrado — limpa os params depois de aplicar, pra não ficar
+  // reaplicando o mesmo filtro sempre que a aba ganha foco de novo.
+  useEffect(() => {
+    if (route.params?.tipoInicial || route.params?.statusInicial) {
+      if (route.params.tipoInicial) setFiltro(route.params.tipoInicial);
+      setStatusFiltro(route.params.statusInicial ?? null);
+      navigation.setParams({ tipoInicial: undefined, statusInicial: undefined });
+    }
+  }, [route.params]);
+
   const carregar = useCallback(async () => {
     setCarregando(true);
     try {
-      const { registros } = await listarRegistros(filtro, busca, clienteSelecionadoId);
+      const { registros } = await listarRegistros(filtro, busca, clienteSelecionadoId, statusFiltro);
       setRegistros(registros);
     } catch {
       setRegistros([]);
     } finally {
       setCarregando(false);
     }
-  }, [filtro, busca, clienteSelecionadoId]);
+  }, [filtro, busca, clienteSelecionadoId, statusFiltro]);
 
   // Recarrega quando muda o filtro ou o texto (com pequeno atraso para a digitação)
   useEffect(() => {
@@ -115,6 +132,18 @@ export default function BuscaScreen() {
           );
         })}
       </View>
+
+      {/* Filtro de status vindo da Visão geral (Início) */}
+      {!!statusFiltro && (
+        <View style={styles.filtroStatusWrapper}>
+          <View style={styles.chipStatus}>
+            <Text style={styles.chipStatusTexto}>Status: {statusFiltro}</Text>
+            <TouchableOpacity onPress={() => setStatusFiltro(null)} hitSlop={8}>
+              <Ionicons name="close-circle" size={16} color={colors.primary} />
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
 
       {/* Filtro por cliente/fornecedor */}
       <View style={styles.filtroClienteWrapper}>
@@ -236,6 +265,25 @@ const styles = StyleSheet.create({
   },
   chipTextoAtivo: {
     color: colors.white,
+  },
+  filtroStatusWrapper: {
+    paddingHorizontal: 16,
+    marginTop: 4,
+  },
+  chipStatus: {
+    alignSelf: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: '#DCEBF7',
+    borderRadius: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
+  chipStatusTexto: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: colors.primary,
   },
   filtroClienteWrapper: {
     paddingHorizontal: 16,

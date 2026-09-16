@@ -340,7 +340,8 @@ export async function buscarDashboard(): Promise<DashboardResposta> {
 export async function listarRegistros(
   tipo = 'todos',
   q = '',
-  clienteFornecedorId?: number | null
+  clienteFornecedorId?: number | null,
+  status?: string | null
 ): Promise<{ registros: Registro[] }> {
   let query = supabase.from('registros').select('*').is('op_id', null);
 
@@ -351,6 +352,9 @@ export async function listarRegistros(
   }
   if (clienteFornecedorId) {
     query = query.eq('cliente_fornecedor_id', clienteFornecedorId);
+  }
+  if (status) {
+    query = query.eq('status', status);
   }
   if (q) {
     const like = `%${q}%`;
