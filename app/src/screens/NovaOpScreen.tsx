@@ -37,10 +37,19 @@ export default function NovaOpScreen() {
   const [produto, setProduto] = useState('');
   const [numeroOp, setNumeroOp] = useState('');
   
-  // Estados para o Tipo de Processo
+  // Estados para o Tipo de Produto
   const [tipoProcesso, setTipoProcesso] = useState('');
   const [mostrarListaProcesso, setMostrarListaProcesso] = useState(false);
-  const tiposProcessoOp = ['Laminação', 'Corte', 'Acabamento'];
+  const tiposProcessoOp = [
+    'Molde plano alumínio',
+    'Molde plano aço',
+    'Reforma de molde plano',
+    'Reforma de molde pneu',
+    'Usinados em geral',
+    'Núcleos fundidos',
+    'Rodas',
+    'Navalhas',
+  ];
 
   // Estados para a Situação da Ordem
   const [situacao, setSituacao] = useState('Em andamento');
@@ -100,7 +109,7 @@ export default function NovaOpScreen() {
 
   const handleSalvarOp = async () => {
     if (!numeroOp || !cliente || !responsavel || !tipoProcesso) {
-      alertar('Atenção', 'Por favor, preencha os campos obrigatórios (Cliente, Responsável, Número da OP e Tipo de processo).');
+      alertar('Atenção', 'Por favor, preencha os campos obrigatórios (Cliente, Responsável, Número da OP e Tipo de produto).');
       return;
     }
 
@@ -247,9 +256,9 @@ export default function NovaOpScreen() {
         {/* Tipo de processo e Situação da ordem (Lado a lado) */}
         <View style={styles.linhaDupla}>
           
-          {/* Tipo de Processo */}
+          {/* Tipo de Produto */}
           <View style={styles.colunaMetade}>
-            <Text style={styles.label}>Tipo de processo <Text style={styles.obrigatorio}>*</Text></Text>
+            <Text style={styles.label}>Tipo de produto <Text style={styles.obrigatorio}>*</Text></Text>
             <TouchableOpacity 
               style={styles.inputSeletor} 
               onPress={() => setMostrarListaProcesso(!mostrarListaProcesso)}
