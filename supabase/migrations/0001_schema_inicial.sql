@@ -228,6 +228,12 @@ create policy registros_update on public.registros
   using (public.usuario_ativo())
   with check (public.usuario_ativo());
 
+-- Qualquer usuário ativo pode excluir (ex: desfazer um registro duplicado
+-- por engano). Os anexos do registro são apagados junto (on delete cascade).
+create policy registros_delete on public.registros
+  for delete to authenticated
+  using (public.usuario_ativo());
+
 -- Gera o código automático (OP-2026-000123 etc, igual ao PREFIXOS_CODIGO do
 -- backend antigo) e marca concluido_em/valida permissões de edição.
 create or replace function public.verificar_registro()

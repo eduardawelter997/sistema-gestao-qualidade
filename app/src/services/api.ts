@@ -493,6 +493,12 @@ export async function buscarRegistro(id: number): Promise<{ registro: Registro }
   return { registro: mapRegistro(data) };
 }
 
+export async function excluirRegistro(id: number): Promise<{ sucesso: boolean }> {
+  const { error } = await supabase.from('registros').delete().eq('id', id);
+  tratarErro(error);
+  return { sucesso: true };
+}
+
 export async function atualizarRegistro(
   id: number,
   dados: {

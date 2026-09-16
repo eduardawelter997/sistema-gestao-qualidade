@@ -29,8 +29,9 @@ import {
   listarRegistros,
   listarAnexos,
   alternarFavorito,
+  excluirRegistro,
 } from '../services/api';
-import { alertar } from '../utils/alerta';
+import { alertar, confirmar } from '../utils/alerta';
 
 export default function OcorrenciaDetalheScreen() {
   const navigation = useNavigation<any>();
@@ -91,6 +92,23 @@ export default function OcorrenciaDetalheScreen() {
     }
   }
 
+  function onExcluir() {
+    if (!ocorrencia) return;
+    confirmar(
+      'Excluir ocorrência',
+      `Tem certeza que deseja excluir "${ocorrencia.codigo}"? Essa ação não pode ser desfeita.`,
+      async () => {
+        try {
+          await excluirRegistro(ocorrencia.id);
+          navigation.goBack();
+        } catch (e: any) {
+          alertar('Erro', e.message || 'Não foi possível excluir a ocorrência.');
+        }
+      },
+      'Excluir'
+    );
+  }
+
   if (carregando) {
     return (
       <View style={styles.container}>
@@ -114,13 +132,18 @@ export default function OcorrenciaDetalheScreen() {
           <Ionicons name="arrow-back" size={24} color="#FFF" />
         </TouchableOpacity>
         <Text style={styles.headerTitulo}>{ocorrencia.codigo}</Text>
-        <TouchableOpacity onPress={onFavoritar} hitSlop={8}>
-          <Ionicons
-            name={ocorrencia.favorito ? 'star' : 'star-outline'}
-            size={22}
-            color="#FFF"
-          />
-        </TouchableOpacity>
+        <View style={styles.headerAcoes}>
+          <TouchableOpacity onPress={onFavoritar} hitSlop={8}>
+            <Ionicons
+              name={ocorrencia.favorito ? 'star' : 'star-outline'}
+              size={22}
+              color="#FFF"
+            />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={onExcluir} hitSlop={8}>
+            <Ionicons name="trash-outline" size={22} color="#FFF" />
+          </TouchableOpacity>
+        </View>
       </View>
 
       <ScrollView contentContainerStyle={styles.conteudo}>
@@ -232,6 +255,11 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     letterSpacing: 0.5,
     flex: 1,
+  },
+  headerAcoes: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
   },
   conteudo: { padding: 16, paddingBottom: 40 },
   card: {
