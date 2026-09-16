@@ -12,6 +12,7 @@ import {
   TouchableOpacity,
   Image,
   ActivityIndicator,
+  Modal,
 } from 'react-native';
 import {
   useNavigation,
@@ -53,13 +54,43 @@ const iconeTipoTimeline: Record<string, keyof typeof Ionicons.glyphMap> = {
 };
 
 function LinhaFotos({ anexos }: { anexos: Anexo[] }) {
+  const [imagemAmpliada, setImagemAmpliada] = useState<string | null>(null);
+
   if (!anexos.length) return null;
   return (
-    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.fotosLinha}>
-      {anexos.map((a) => (
-        <Image key={a.id} source={{ uri: a.url }} style={styles.foto} />
-      ))}
-    </ScrollView>
+    <>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.fotosLinha}>
+        {anexos.map((a) => (
+          <TouchableOpacity key={a.id} activeOpacity={0.8} onPress={() => setImagemAmpliada(a.url)}>
+            <Image source={{ uri: a.url }} style={styles.foto} />
+          </TouchableOpacity>
+        ))}
+      </ScrollView>
+
+      <Modal
+        visible={!!imagemAmpliada}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setImagemAmpliada(null)}
+      >
+        <TouchableOpacity
+          style={styles.fundoModal}
+          activeOpacity={1}
+          onPress={() => setImagemAmpliada(null)}
+        >
+          <TouchableOpacity
+            style={styles.botaoFecharModal}
+            onPress={() => setImagemAmpliada(null)}
+            hitSlop={12}
+          >
+            <Ionicons name="close" size={28} color="#FFF" />
+          </TouchableOpacity>
+          {!!imagemAmpliada && (
+            <Image source={{ uri: imagemAmpliada }} style={styles.imagemAmpliada} resizeMode="contain" />
+          )}
+        </TouchableOpacity>
+      </Modal>
+    </>
   );
 }
 
@@ -374,5 +405,21 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     marginTop: 20,
     paddingHorizontal: 8,
+  },
+  fundoModal: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.9)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  botaoFecharModal: {
+    position: 'absolute',
+    top: 48,
+    right: 20,
+    zIndex: 1,
+  },
+  imagemAmpliada: {
+    width: '100%',
+    height: '80%',
   },
 });

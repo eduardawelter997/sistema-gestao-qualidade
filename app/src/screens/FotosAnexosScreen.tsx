@@ -12,6 +12,8 @@ import {
   TouchableOpacity,
   Image,
   ActivityIndicator,
+  Modal,
+  Linking,
 } from 'react-native';
 import { useRoute, useNavigation, useFocusEffect, RouteProp } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
@@ -66,6 +68,7 @@ export default function FotosAnexosScreen() {
   const [anexos, setAnexos] = useState<Anexo[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [enviando, setEnviando] = useState(false);
+  const [imagemAmpliada, setImagemAmpliada] = useState<string | null>(null);
 
   const carregar = useCallback(async () => {
     try {
@@ -164,13 +167,20 @@ export default function FotosAnexosScreen() {
                       >
                         <Ionicons name="trash-outline" size={16} color={colors.danger} />
                       </TouchableOpacity>
-                      {ehImagem ? (
-                        <Image source={{ uri: a.url }} style={styles.itemImagem} />
-                      ) : (
-                        <View style={styles.itemDocumento}>
-                          <Ionicons name="document-text-outline" size={32} color={colors.primary} />
-                        </View>
-                      )}
+                      <TouchableOpacity
+                        activeOpacity={0.8}
+                        onPress={() =>
+                          ehImagem ? setImagemAmpliada(a.url) : Linking.openURL(a.url)
+                        }
+                      >
+                        {ehImagem ? (
+                          <Image source={{ uri: a.url }} style={styles.itemImagem} />
+                        ) : (
+                          <View style={styles.itemDocumento}>
+                            <Ionicons name="document-text-outline" size={32} color={colors.primary} />
+                          </View>
+                        )}
+                      </TouchableOpacity>
                       <Text style={styles.itemNome} numberOfLines={1}>
                         {a.nome_arquivo}
                       </Text>
@@ -195,6 +205,34 @@ export default function FotosAnexosScreen() {
           <Text style={styles.botaoSalvarTexto}>Salvar anexos</Text>
         </TouchableOpacity>
       </ScrollView>
+
+      <Modal
+        visible={!!imagemAmpliada}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setImagemAmpliada(null)}
+      >
+        <TouchableOpacity
+          style={styles.fundoModal}
+          activeOpacity={1}
+          onPress={() => setImagemAmpliada(null)}
+        >
+          <TouchableOpacity
+            style={styles.botaoFecharModal}
+            onPress={() => setImagemAmpliada(null)}
+            hitSlop={12}
+          >
+            <Ionicons name="close" size={28} color="#FFF" />
+          </TouchableOpacity>
+          {!!imagemAmpliada && (
+            <Image
+              source={{ uri: imagemAmpliada }}
+              style={styles.imagemAmpliada}
+              resizeMode="contain"
+            />
+          )}
+        </TouchableOpacity>
+      </Modal>
     </View>
   );
 }
@@ -329,5 +367,21 @@ const styles = StyleSheet.create({
     color: '#FFF',
     fontSize: 16,
     fontWeight: '700',
+  },
+  fundoModal: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.9)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  botaoFecharModal: {
+    position: 'absolute',
+    top: 48,
+    right: 20,
+    zIndex: 1,
+  },
+  imagemAmpliada: {
+    width: '100%',
+    height: '80%',
   },
 });
