@@ -80,6 +80,7 @@ export default function CadastrarClienteScreen() {
   const [email, setEmail] = useState('');
   const [telefone, setTelefone] = useState('');
   const [observacoes, setObservacoes] = useState('');
+  const [salvando, setSalvando] = useState(false);
 
   // A tela fica registrada como "aba escondida" no navegador, então o React
   // não a desmonta ao voltar — sem isso, o formulário reapareceria com os
@@ -92,16 +93,19 @@ export default function CadastrarClienteScreen() {
       setEmail('');
       setTelefone('');
       setObservacoes('');
+      setSalvando(false);
     }, [])
   );
 
   // Função de salvar
   const handleSalvarCadastro = async () => {
+    if (salvando) return; // evita cadastrar duplicado se a pessoa clicar mais de uma vez
     if (!nome) {
       alertar('Atenção', 'Por favor, preencha os campos obrigatórios.');
       return;
     }
 
+    setSalvando(true);
     try {
       await criarRegistro({
         tipo: tipoCadastro,
@@ -113,6 +117,8 @@ export default function CadastrarClienteScreen() {
       navigation.goBack();
     } catch (error: any) {
       alertar('Erro', error.message || 'Não foi possível conectar ao servidor.');
+    } finally {
+      setSalvando(false);
     }
   };
 
@@ -241,12 +247,13 @@ export default function CadastrarClienteScreen() {
         />
 
         {/* Botão Salvar cadastro */}
-        <TouchableOpacity 
-          style={styles.botaoSalvar} 
-          activeOpacity={0.8} 
+        <TouchableOpacity
+          style={[styles.botaoSalvar, salvando && styles.botaoSalvarDesabilitado]}
+          activeOpacity={0.8}
           onPress={handleSalvarCadastro}
+          disabled={salvando}
         >
-          <Text style={styles.botaoSalvarTexto}>Salvar cadastro</Text>
+          <Text style={styles.botaoSalvarTexto}>{salvando ? 'Salvando...' : 'Salvar cadastro'}</Text>
         </TouchableOpacity>
 
       </ScrollView>
@@ -366,6 +373,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 16,
     marginTop: 24,
+  },
+  botaoSalvarDesabilitado: {
+    opacity: 0.6,
   },
   botaoSalvarTexto: {
     color: '#FFF',

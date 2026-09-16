@@ -105,6 +105,7 @@ export default function NovaAcaoCorretivaScreen() {
   const [analiseCausa, setAnaliseCausa] = useState('');
   const [acaoProposta, setAcaoProposta] = useState('');
   const [foto, setFoto] = useState<{ uri: string; name: string; type: string } | null>(null);
+  const [salvando, setSalvando] = useState(false);
 
   // A tela fica registrada como "aba escondida" no navegador, então o React
   // não a desmonta ao voltar — sem isso, o formulário reapareceria com os
@@ -123,6 +124,7 @@ export default function NovaAcaoCorretivaScreen() {
       setAnaliseCausa('');
       setAcaoProposta('');
       setFoto(null);
+      setSalvando(false);
       setMostrarOrigens(false);
       setMostrarMetodos(false);
       setMostrarOcorrencias(false);
@@ -154,11 +156,13 @@ export default function NovaAcaoCorretivaScreen() {
   }
 
   async function handleSalvar() {
+    if (salvando) return; // evita registrar duplicado se a pessoa clicar mais de uma vez
     if (!origem) {
       alertar('Atenção', 'Por favor, selecione a origem da ação corretiva.');
       return;
     }
 
+    setSalvando(true);
     try {
       const resultado = await criarRegistro({
         tipo: 'acao',
@@ -183,6 +187,8 @@ export default function NovaAcaoCorretivaScreen() {
       navigation.goBack();
     } catch (error: any) {
       alertar('Erro', error.message || 'Não foi possível conectar ao servidor.');
+    } finally {
+      setSalvando(false);
     }
   }
 
@@ -445,8 +451,15 @@ export default function NovaAcaoCorretivaScreen() {
         {!!foto && <Image source={{ uri: foto.uri }} style={styles.previewFoto} />}
 
         {/* Botão Salvar */}
-        <TouchableOpacity style={styles.botaoSalvar} activeOpacity={0.8} onPress={handleSalvar}>
-          <Text style={styles.botaoSalvarTexto}>Salvar ação corretiva</Text>
+        <TouchableOpacity
+          style={[styles.botaoSalvar, salvando && styles.botaoSalvarDesabilitado]}
+          activeOpacity={0.8}
+          onPress={handleSalvar}
+          disabled={salvando}
+        >
+          <Text style={styles.botaoSalvarTexto}>
+            {salvando ? 'Salvando...' : 'Salvar ação corretiva'}
+          </Text>
         </TouchableOpacity>
       </ScrollView>
     </View>
@@ -567,6 +580,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 16,
     marginTop: 24,
+  },
+  botaoSalvarDesabilitado: {
+    opacity: 0.6,
   },
   botaoSalvarTexto: {
     color: '#FFF',

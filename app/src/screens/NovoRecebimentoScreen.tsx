@@ -85,6 +85,7 @@ export default function NovoRecebimentoScreen() {
   const [comProblema, setComProblema] = useState(false);
   const [observacoes, setObservacoes] = useState('');
   const [foto, setFoto] = useState<{ uri: string; name: string; type: string } | null>(null);
+  const [salvando, setSalvando] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
@@ -131,6 +132,7 @@ export default function NovoRecebimentoScreen() {
       setComProblema(false);
       setObservacoes('');
       setFoto(null);
+      setSalvando(false);
       setMostrarClientesFornecedores(false);
       setMostrarOps(false);
       setMostrarResponsaveis(false);
@@ -151,6 +153,7 @@ export default function NovoRecebimentoScreen() {
   }
 
   async function handleSalvar() {
+    if (salvando) return; // evita registrar duplicado se a pessoa clicar mais de uma vez
     if (!clienteFornecedor || !material) {
       alertar(
         'Atenção',
@@ -159,6 +162,7 @@ export default function NovoRecebimentoScreen() {
       return;
     }
 
+    setSalvando(true);
     try {
       const resultado = await criarRegistro({
         tipo: 'recebimento',
@@ -170,6 +174,8 @@ export default function NovoRecebimentoScreen() {
         responsavel,
         descricao: observacoes,
         comProblema,
+        // Vinculado a uma OP entra na linha do tempo dela (opId).
+        opId: opRelacionada?.id,
         opRelacionadaId: opRelacionada?.id,
         clienteFornecedorId: clienteFornecedor.id,
       });
@@ -182,6 +188,8 @@ export default function NovoRecebimentoScreen() {
       navigation.goBack();
     } catch (error: any) {
       alertar('Erro', error.message || 'Não foi possível conectar ao servidor.');
+    } finally {
+      setSalvando(false);
     }
   }
 
@@ -288,7 +296,11 @@ export default function NovoRecebimentoScreen() {
         <Text style={styles.label}>OP relacionada (opcional)</Text>
         <TouchableOpacity style={styles.inputSeletor} onPress={() => setMostrarOps(!mostrarOps)}>
           <Text style={styles.inputTextoSimples} numberOfLines={1}>
-            {opRelacionada?.codigo || 'Selecione a OP'}
+            {opRelacionada
+              ? opRelacionada.produto
+                ? `${opRelacionada.codigo} - ${opRelacionada.produto}`
+                : opRelacionada.codigo
+              : 'Selecione a OP'}
           </Text>
           <Ionicons name="chevron-down" size={18} color={colors.textSecondary} />
         </TouchableOpacity>
@@ -313,7 +325,9 @@ export default function NovoRecebimentoScreen() {
                     setMostrarOps(false);
                   }}
                 >
-                  <Text style={styles.dropdownItemText}>{op.codigo}</Text>
+                  <Text style={styles.dropdownItemText}>
+                    {op.produto ? `${op.codigo} - ${op.produto}` : op.codigo}
+                  </Text>
                 </TouchableOpacity>
               ))}
             </ScrollView>
@@ -403,8 +417,15 @@ export default function NovoRecebimentoScreen() {
         {!!foto && <Image source={{ uri: foto.uri }} style={styles.previewFoto} />}
 
         {/* Botão Salvar */}
-        <TouchableOpacity style={styles.botaoSalvar} activeOpacity={0.8} onPress={handleSalvar}>
-          <Text style={styles.botaoSalvarTexto}>Salvar recebimento</Text>
+        <TouchableOpacity
+          style={[styles.botaoSalvar, salvando && styles.botaoSalvarDesabilitado]}
+          activeOpacity={0.8}
+          onPress={handleSalvar}
+          disabled={salvando}
+        >
+          <Text style={styles.botaoSalvarTexto}>
+            {salvando ? 'Salvando...' : 'Salvar recebimento'}
+          </Text>
         </TouchableOpacity>
       </ScrollView>
     </View>
@@ -582,6 +603,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 16,
     marginTop: 24,
+  },
+  botaoSalvarDesabilitado: {
+    opacity: 0.6,
   },
   botaoSalvarTexto: {
     color: '#FFF',

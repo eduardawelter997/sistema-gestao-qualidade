@@ -36,7 +36,10 @@ export default function ConvidarColaboradorScreen() {
     'Usinagem',
     'Banca',
     'Desenvolvimento',
+    'Administrativo',
   ];
+
+  const [salvando, setSalvando] = useState(false);
 
   // A tela fica registrada como "aba escondida" no navegador, então o React
   // não a desmonta ao voltar — sem isso, o formulário reapareceria com os
@@ -48,17 +51,20 @@ export default function ConvidarColaboradorScreen() {
       setSenha('');
       setPerfil('');
       setSetor('');
+      setSalvando(false);
       setMostrarListaPerfil(false);
       setMostrarListaSetor(false);
     }, [])
   );
 
   const handleCadastrarAcesso = async () => {
+    if (salvando) return; // evita cadastrar duplicado se a pessoa clicar mais de uma vez
     if (!nome || !email || !senha || !perfil || !setor) {
       alertar('Atenção', 'Por favor, preencha todos os campos, incluindo a senha de acesso.');
       return;
     }
 
+    setSalvando(true);
     try {
       await cadastrarColaborador({ nome, email, senha, perfil, setor });
 
@@ -74,6 +80,8 @@ export default function ConvidarColaboradorScreen() {
     } catch (error: any) {
       console.log('Erro ao cadastrar colaborador:', error);
       alertar('Erro', error.message || 'Não foi possível cadastrar o colaborador.');
+    } finally {
+      setSalvando(false);
     }
   };
 
@@ -191,8 +199,15 @@ export default function ConvidarColaboradorScreen() {
         )}
 
         {/* Botão Cadastrar Acesso */}
-        <TouchableOpacity style={styles.botaoEnviar} activeOpacity={0.8} onPress={handleCadastrarAcesso}>
-          <Text style={styles.botaoEnviarTexto}>Salvar e Criar Acesso</Text>
+        <TouchableOpacity
+          style={[styles.botaoEnviar, salvando && styles.botaoEnviarDesabilitado]}
+          activeOpacity={0.8}
+          onPress={handleCadastrarAcesso}
+          disabled={salvando}
+        >
+          <Text style={styles.botaoEnviarTexto}>
+            {salvando ? 'Salvando...' : 'Salvar e Criar Acesso'}
+          </Text>
         </TouchableOpacity>
 
         <Text style={styles.rodapeAviso}>
@@ -306,6 +321,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 16,
     marginTop: 24,
+  },
+  botaoEnviarDesabilitado: {
+    opacity: 0.6,
   },
   botaoEnviarTexto: {
     color: '#FFF',

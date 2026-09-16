@@ -56,6 +56,8 @@ export default function NovaOpScreen() {
   const [mostrarListaSituacao, setMostrarListaSituacao] = useState(false);
   const situacoesOp = ['Aberta', 'Em andamento', 'Concluído'];
 
+  const [salvando, setSalvando] = useState(false);
+
   // A tela fica registrada como "aba escondida" no navegador, então o React
   // não a desmonta ao voltar — sem isso, o formulário reapareceria com os
   // dados da última vez que foi preenchido.
@@ -68,6 +70,7 @@ export default function NovaOpScreen() {
       setNumeroOp('');
       setTipoProcesso('');
       setSituacao('Em andamento');
+      setSalvando(false);
       setMostrarListaClientes(false);
       setMostrarListaResponsaveis(false);
       setMostrarListaProcesso(false);
@@ -108,11 +111,13 @@ export default function NovaOpScreen() {
   };
 
   const handleSalvarOp = async () => {
+    if (salvando) return; // evita registrar duplicado se a pessoa clicar mais de uma vez
     if (!numeroOp || !cliente || !responsavel || !tipoProcesso) {
       alertar('Atenção', 'Por favor, preencha os campos obrigatórios (Cliente, Responsável, Número da OP e Tipo de produto).');
       return;
     }
 
+    setSalvando(true);
     try {
       const ano = new Date().getFullYear();
       const codigo = `OP-${ano}-${numeroOp.padStart(5, '0')}`;
@@ -132,6 +137,8 @@ export default function NovaOpScreen() {
       navigation.goBack();
     } catch (error: any) {
       alertar('Erro', error.message || 'Não foi possível conectar ao servidor.');
+    } finally {
+      setSalvando(false);
     }
   };
 
@@ -319,8 +326,13 @@ export default function NovaOpScreen() {
         </View>
 
         {/* Botão Salvar OP */}
-        <TouchableOpacity style={styles.botaoSalvar} activeOpacity={0.8} onPress={handleSalvarOp}>
-          <Text style={styles.botaoSalvarTexto}>Salvar OP</Text>
+        <TouchableOpacity
+          style={[styles.botaoSalvar, salvando && styles.botaoSalvarDesabilitado]}
+          activeOpacity={0.8}
+          onPress={handleSalvarOp}
+          disabled={salvando}
+        >
+          <Text style={styles.botaoSalvarTexto}>{salvando ? 'Salvando...' : 'Salvar OP'}</Text>
         </TouchableOpacity>
 
       </ScrollView>
@@ -449,6 +461,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 16,
     marginTop: 24,
+  },
+  botaoSalvarDesabilitado: {
+    opacity: 0.6,
   },
   botaoSalvarTexto: {
     color: '#FFF',

@@ -127,6 +127,7 @@ export default function NovaOcorrenciaScreen() {
   const [data, setData] = useState(dataDeHoje());
   const [descricao, setDescricao] = useState('');
   const [foto, setFoto] = useState<{ uri: string; name: string; type: string } | null>(null);
+  const [salvando, setSalvando] = useState(false);
 
   // A tela fica registrada como "aba escondida" no navegador, então o React
   // não a desmonta ao voltar — sem isso, o formulário reapareceria com os
@@ -151,6 +152,7 @@ export default function NovaOcorrenciaScreen() {
       setData(dataDeHoje());
       setDescricao('');
       setFoto(null);
+      setSalvando(false);
       setMostrarTipos(false);
       setMostrarOps(false);
       setMostrarClientesFornecedores(false);
@@ -175,6 +177,7 @@ export default function NovaOcorrenciaScreen() {
   }
 
   async function handleSalvar() {
+    if (salvando) return; // evita registrar duplicado se a pessoa clicar mais de uma vez
     if (!tipoOcorrencia || !descricao) {
       alertar(
         'Atenção',
@@ -183,6 +186,7 @@ export default function NovaOcorrenciaScreen() {
       return;
     }
 
+    setSalvando(true);
     try {
       const resultado = await criarRegistro({
         tipo: 'ocorrencia',
@@ -192,6 +196,11 @@ export default function NovaOcorrenciaScreen() {
         responsavel,
         data,
         descricao,
+        // Quando vinculada a uma OP, entra na linha do tempo dela (opId) —
+        // igual já acontecia ao criar pelo atalho de dentro da própria OP.
+        // Sem isso o registro ficava "solto", só referenciando a OP sem
+        // aparecer na timeline dela.
+        opId: opRelacionada?.id,
         opRelacionadaId: opRelacionada?.id,
         clienteFornecedorId: clienteFornecedor?.id,
       });
@@ -204,6 +213,8 @@ export default function NovaOcorrenciaScreen() {
       navigation.goBack();
     } catch (error: any) {
       alertar('Erro', error.message || 'Não foi possível conectar ao servidor.');
+    } finally {
+      setSalvando(false);
     }
   }
 
@@ -263,18 +274,21 @@ export default function NovaOcorrenciaScreen() {
               >
                 <Text style={styles.dropdownItemText}>Nenhuma</Text>
               </TouchableOpacity>
-              {ops.map((op) => (
-                <TouchableOpacity
-                  key={op.id}
-                  style={styles.dropdownItem}
-                  onPress={() => {
-                    setOpRelacionada({ id: op.id, codigo: op.codigo });
-                    setMostrarOps(false);
-                  }}
-                >
-                  <Text style={styles.dropdownItemText}>{op.codigo}</Text>
-                </TouchableOpacity>
-              ))}
+              {ops.map((op) => {
+                const rotulo = op.produto ? `${op.codigo} - ${op.produto}` : op.codigo;
+                return (
+                  <TouchableOpacity
+                    key={op.id}
+                    style={styles.dropdownItem}
+                    onPress={() => {
+                      setOpRelacionada({ id: op.id, codigo: rotulo });
+                      setMostrarOps(false);
+                    }}
+                  >
+                    <Text style={styles.dropdownItemText}>{rotulo}</Text>
+                  </TouchableOpacity>
+                );
+              })}
             </ScrollView>
           </View>
         )}
@@ -413,8 +427,15 @@ export default function NovaOcorrenciaScreen() {
         {!!foto && <Image source={{ uri: foto.uri }} style={styles.previewFoto} />}
 
         {/* Botão Salvar */}
-        <TouchableOpacity style={styles.botaoSalvar} activeOpacity={0.8} onPress={handleSalvar}>
-          <Text style={styles.botaoSalvarTexto}>Salvar ocorrência</Text>
+        <TouchableOpacity
+          style={[styles.botaoSalvar, salvando && styles.botaoSalvarDesabilitado]}
+          activeOpacity={0.8}
+          onPress={handleSalvar}
+          disabled={salvando}
+        >
+          <Text style={styles.botaoSalvarTexto}>
+            {salvando ? 'Salvando...' : 'Salvar ocorrência'}
+          </Text>
         </TouchableOpacity>
       </ScrollView>
     </View>
@@ -525,6 +546,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 16,
     marginTop: 24,
+  },
+  botaoSalvarDesabilitado: {
+    opacity: 0.6,
   },
   botaoSalvarTexto: {
     color: '#FFF',

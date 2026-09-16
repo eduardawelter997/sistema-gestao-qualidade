@@ -93,6 +93,7 @@ export default function NovoRegistroOpScreen() {
   const [detalhes, setDetalhes] = useState('');
   const [foto, setFoto] = useState<{ uri: string; name: string; type: string } | null>(null);
   const [carregando, setCarregando] = useState(modoEdicao);
+  const [salvando, setSalvando] = useState(false);
 
   useEffect(() => {
     listarUsuarios()
@@ -141,6 +142,7 @@ export default function NovoRegistroOpScreen() {
   }
 
   async function handleSalvar() {
+    if (salvando) return; // evita registrar duplicado se a pessoa clicar mais de uma vez
     if (!tipoRegistro || !responsavel) {
       alertar(
         'Atenção',
@@ -151,6 +153,7 @@ export default function NovoRegistroOpScreen() {
 
     const rotuloTipo = TIPOS_REGISTRO.find((t) => t.valor === tipoRegistro)?.rotulo || tipoRegistro;
 
+    setSalvando(true);
     try {
       let idParaAnexo = registroId;
 
@@ -186,6 +189,8 @@ export default function NovoRegistroOpScreen() {
       navigation.goBack();
     } catch (error: any) {
       alertar('Erro', error.message || 'Não foi possível conectar ao servidor.');
+    } finally {
+      setSalvando(false);
     }
   }
 
@@ -344,13 +349,13 @@ export default function NovoRegistroOpScreen() {
 
         {/* Botão Salvar */}
         <TouchableOpacity
-          style={styles.botaoSalvar}
+          style={[styles.botaoSalvar, salvando && styles.botaoSalvarDesabilitado]}
           activeOpacity={0.8}
           onPress={handleSalvar}
-          disabled={carregando}
+          disabled={carregando || salvando}
         >
           <Text style={styles.botaoSalvarTexto}>
-            {modoEdicao ? 'Salvar alterações' : 'Salvar registro'}
+            {salvando ? 'Salvando...' : modoEdicao ? 'Salvar alterações' : 'Salvar registro'}
           </Text>
         </TouchableOpacity>
       </ScrollView>
@@ -505,6 +510,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 16,
     marginTop: 24,
+  },
+  botaoSalvarDesabilitado: {
+    opacity: 0.6,
   },
   botaoSalvarTexto: {
     color: '#FFF',

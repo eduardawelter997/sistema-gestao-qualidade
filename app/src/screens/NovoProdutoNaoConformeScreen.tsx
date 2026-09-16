@@ -103,6 +103,7 @@ export default function NovoProdutoNaoConformeScreen() {
   const [mostrarDisposicoes, setMostrarDisposicoes] = useState(false);
 
   const [foto, setFoto] = useState<{ uri: string; name: string; type: string } | null>(null);
+  const [salvando, setSalvando] = useState(false);
 
   // A tela fica registrada como "aba escondida" no navegador, então o React
   // não a desmonta ao voltar — sem isso, o formulário reapareceria com os
@@ -120,6 +121,7 @@ export default function NovoProdutoNaoConformeScreen() {
       setDescricao('');
       setDisposicao('');
       setFoto(null);
+      setSalvando(false);
       setMostrarOps(false);
       setMostrarClientesFornecedores(false);
       setMostrarSetores(false);
@@ -144,6 +146,7 @@ export default function NovoProdutoNaoConformeScreen() {
   }
 
   async function handleSalvar() {
+    if (salvando) return; // evita registrar duplicado se a pessoa clicar mais de uma vez
     if (!produto || !descricao) {
       alertar(
         'Atenção',
@@ -152,6 +155,7 @@ export default function NovoProdutoNaoConformeScreen() {
       return;
     }
 
+    setSalvando(true);
     try {
       const resultado = await criarRegistro({
         tipo: 'ocorrencia',
@@ -165,6 +169,9 @@ export default function NovoProdutoNaoConformeScreen() {
         data,
         descricao,
         disposicao,
+        // Vinculada a uma OP entra na linha do tempo dela (opId), igual às
+        // outras telas de registro dentro de uma OP.
+        opId: opRelacionada?.id,
         opRelacionadaId: opRelacionada?.id,
         clienteFornecedorId: clienteFornecedor?.id,
       });
@@ -177,6 +184,8 @@ export default function NovoProdutoNaoConformeScreen() {
       navigation.navigate('OcorrenciaDetalhe', { ocorrenciaId: resultado.id });
     } catch (error: any) {
       alertar('Erro', error.message || 'Não foi possível conectar ao servidor.');
+    } finally {
+      setSalvando(false);
     }
   }
 
@@ -238,18 +247,21 @@ export default function NovoProdutoNaoConformeScreen() {
               >
                 <Text style={styles.dropdownItemText}>Nenhuma</Text>
               </TouchableOpacity>
-              {ops.map((op) => (
+              {ops.map((op) => {
+                const rotulo = op.produto ? `${op.codigo} - ${op.produto}` : op.codigo;
+                return (
                 <TouchableOpacity
                   key={op.id}
                   style={styles.dropdownItem}
                   onPress={() => {
-                    setOpRelacionada({ id: op.id, codigo: op.codigo });
+                    setOpRelacionada({ id: op.id, codigo: rotulo });
                     setMostrarOps(false);
                   }}
                 >
-                  <Text style={styles.dropdownItemText}>{op.codigo}</Text>
+                  <Text style={styles.dropdownItemText}>{rotulo}</Text>
                 </TouchableOpacity>
-              ))}
+                );
+              })}
             </ScrollView>
           </View>
         )}
@@ -416,8 +428,15 @@ export default function NovoProdutoNaoConformeScreen() {
         {!!foto && <Image source={{ uri: foto.uri }} style={styles.previewFoto} />}
 
         {/* Botão Salvar */}
-        <TouchableOpacity style={styles.botaoSalvar} activeOpacity={0.8} onPress={handleSalvar}>
-          <Text style={styles.botaoSalvarTexto}>Salvar não conformidade</Text>
+        <TouchableOpacity
+          style={[styles.botaoSalvar, salvando && styles.botaoSalvarDesabilitado]}
+          activeOpacity={0.8}
+          onPress={handleSalvar}
+          disabled={salvando}
+        >
+          <Text style={styles.botaoSalvarTexto}>
+            {salvando ? 'Salvando...' : 'Salvar não conformidade'}
+          </Text>
         </TouchableOpacity>
       </ScrollView>
     </View>
@@ -538,6 +557,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 16,
     marginTop: 24,
+  },
+  botaoSalvarDesabilitado: {
+    opacity: 0.6,
   },
   botaoSalvarTexto: {
     color: '#FFF',
