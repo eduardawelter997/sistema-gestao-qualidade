@@ -67,6 +67,12 @@ export default function RegistroCard({ registro, aoAlternarFavorito }: Props) {
         {!!registro.descricao && ` · ${registro.descricao}`}
       </Text>
 
+      {!!registro.cliente_fornecedor_titulo && (
+        <Text style={styles.clienteFornecedor} numberOfLines={1}>
+          {registro.cliente_fornecedor_titulo}
+        </Text>
+      )}
+
       <Text style={styles.data}>{registro.data}</Text>
     </TouchableOpacity>
   );
@@ -107,6 +113,12 @@ const styles = StyleSheet.create({
   subtitulo: {
     fontSize: 13,
     color: colors.textSecondary,
+    marginTop: 2,
+  },
+  clienteFornecedor: {
+    fontSize: 12,
+    color: colors.primary,
+    fontWeight: '600',
     marginTop: 2,
   },
   data: {

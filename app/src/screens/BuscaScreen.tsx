@@ -11,6 +11,7 @@ import {
   TextInput,
   TouchableOpacity,
   FlatList,
+  ScrollView,
   ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -18,7 +19,12 @@ import { Ionicons } from '@expo/vector-icons';
 import Header from '../components/Header';
 import RegistroCard from '../components/RegistroCard';
 import { colors } from '../theme/colors';
-import { listarRegistros, alternarFavorito, Registro } from '../services/api';
+import {
+  listarRegistros,
+  listarClientesFornecedores,
+  alternarFavorito,
+  Registro,
+} from '../services/api';
 
 // Filtros disponíveis (valor enviado à API + rótulo exibido)
 const FILTROS = [
@@ -35,17 +41,28 @@ export default function BuscaScreen() {
   const [registros, setRegistros] = useState<Registro[]>([]);
   const [carregando, setCarregando] = useState(false);
 
+  const [listaClientes, setListaClientes] = useState<any[]>([]);
+  const [clienteSelecionadoId, setClienteSelecionadoId] = useState<number | null>(null);
+  const [clienteSelecionadoNome, setClienteSelecionadoNome] = useState('Todos os clientes e fornecedores');
+  const [mostrarClientes, setMostrarClientes] = useState(false);
+
+  useEffect(() => {
+    listarClientesFornecedores()
+      .then(setListaClientes)
+      .catch(() => setListaClientes([]));
+  }, []);
+
   const carregar = useCallback(async () => {
     setCarregando(true);
     try {
-      const { registros } = await listarRegistros(filtro, busca);
+      const { registros } = await listarRegistros(filtro, busca, clienteSelecionadoId);
       setRegistros(registros);
     } catch {
       setRegistros([]);
     } finally {
       setCarregando(false);
     }
-  }, [filtro, busca]);
+  }, [filtro, busca, clienteSelecionadoId]);
 
   // Recarrega quando muda o filtro ou o texto (com pequeno atraso para a digitação)
   useEffect(() => {
@@ -97,6 +114,55 @@ export default function BuscaScreen() {
             </TouchableOpacity>
           );
         })}
+      </View>
+
+      {/* Filtro por cliente/fornecedor */}
+      <View style={styles.filtroClienteWrapper}>
+        <TouchableOpacity
+          style={styles.dropdownBox}
+          activeOpacity={0.8}
+          onPress={() => setMostrarClientes((atual) => !atual)}
+        >
+          <Text style={styles.dropdownTexto} numberOfLines={1}>
+            {clienteSelecionadoNome}
+          </Text>
+          <Ionicons
+            name={mostrarClientes ? 'chevron-up' : 'chevron-down'}
+            size={16}
+            color={colors.textSecondary}
+          />
+        </TouchableOpacity>
+        {mostrarClientes && (
+          <View style={styles.dropdownContainer}>
+            <ScrollView style={{ maxHeight: 220 }} nestedScrollEnabled>
+              <TouchableOpacity
+                style={styles.dropdownItem}
+                onPress={() => {
+                  setClienteSelecionadoId(null);
+                  setClienteSelecionadoNome('Todos os clientes e fornecedores');
+                  setMostrarClientes(false);
+                }}
+              >
+                <Text style={styles.dropdownItemTextoDestaque}>Todos os clientes e fornecedores</Text>
+              </TouchableOpacity>
+              {listaClientes.map((item) => (
+                <TouchableOpacity
+                  key={item.id}
+                  style={styles.dropdownItem}
+                  onPress={() => {
+                    setClienteSelecionadoId(item.id);
+                    setClienteSelecionadoNome(item.titulo || 'Cliente');
+                    setMostrarClientes(false);
+                  }}
+                >
+                  <Text style={styles.dropdownItemTexto} numberOfLines={1}>
+                    {item.titulo} <Text style={styles.tipoTexto}>· {item.tipo || 'Cliente'}</Text>
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        )}
       </View>
 
       {/* Lista */}
@@ -171,6 +237,39 @@ const styles = StyleSheet.create({
   chipTextoAtivo: {
     color: colors.white,
   },
+  filtroClienteWrapper: {
+    paddingHorizontal: 16,
+    marginTop: 4,
+  },
+  dropdownBox: {
+    backgroundColor: colors.cardBg,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: colors.border,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    height: 40,
+  },
+  dropdownTexto: { flex: 1, fontSize: 13, color: colors.textPrimary, marginRight: 8 },
+  dropdownContainer: {
+    backgroundColor: colors.cardBg,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: colors.border,
+    marginTop: 4,
+    overflow: 'hidden',
+  },
+  dropdownItem: {
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F0',
+  },
+  dropdownItemTexto: { fontSize: 13, color: colors.textPrimary },
+  dropdownItemTextoDestaque: { fontSize: 13, fontWeight: 'bold', color: colors.primary },
+  tipoTexto: { color: colors.textSecondary, fontSize: 12 },
   lista: {
     padding: 16,
     paddingTop: 10,

@@ -44,6 +44,7 @@ export interface Registro {
   op_relacionada_id?: number | null;
   ocorrencia_relacionada_id?: number | null;
   cliente_fornecedor_id?: number | null;
+  cliente_fornecedor_titulo?: string | null;
   nota_fiscal?: string | null;
   com_problema?: number | null;
   avaliacao_eficacia?: string | null;
@@ -336,13 +337,20 @@ export async function buscarDashboard(): Promise<DashboardResposta> {
   };
 }
 
-export async function listarRegistros(tipo = 'todos', q = ''): Promise<{ registros: Registro[] }> {
+export async function listarRegistros(
+  tipo = 'todos',
+  q = '',
+  clienteFornecedorId?: number | null
+): Promise<{ registros: Registro[] }> {
   let query = supabase.from('registros').select('*').is('op_id', null);
 
   if (tipo && tipo !== 'todos') {
     query = query.eq('tipo', tipo);
   } else {
     query = query.not('tipo', 'in', '(cliente,fornecedor)');
+  }
+  if (clienteFornecedorId) {
+    query = query.eq('cliente_fornecedor_id', clienteFornecedorId);
   }
   if (q) {
     const like = `%${q}%`;
@@ -366,7 +374,27 @@ export async function listarRegistros(tipo = 'todos', q = ''): Promise<{ registr
 
   const { data, error } = await query.order('id', { ascending: false });
   tratarErro(error);
-  return { registros: (data ?? []).map(mapRegistro) };
+  const registros = (data ?? []).map(mapRegistro);
+  await preencherNomeClienteFornecedor(registros);
+  return { registros };
+}
+
+// Busca em lote o nome (e tipo) dos clientes/fornecedores vinculados aos
+// registros passados e preenche cliente_fornecedor_titulo em cada um —
+// evita repetir a mesma consulta de cliente pra cada card na tela.
+async function preencherNomeClienteFornecedor(registros: Registro[]): Promise<void> {
+  const ids = Array.from(
+    new Set(registros.map((r) => r.cliente_fornecedor_id).filter((id): id is number => !!id))
+  );
+  if (ids.length === 0) return;
+
+  const { data } = await supabase.from('registros').select('id, titulo').in('id', ids);
+  const mapa = new Map((data ?? []).map((c: any) => [c.id, c.titulo as string]));
+  registros.forEach((r) => {
+    if (r.cliente_fornecedor_id) {
+      r.cliente_fornecedor_titulo = mapa.get(r.cliente_fornecedor_id) ?? null;
+    }
+  });
 }
 
 export async function listarFavoritos(): Promise<{ registros: Registro[] }> {
@@ -378,7 +406,9 @@ export async function listarFavoritos(): Promise<{ registros: Registro[] }> {
     .not('tipo', 'in', '(cliente,fornecedor)')
     .order('id', { ascending: false });
   tratarErro(error);
-  return { registros: (data ?? []).map(mapRegistro) };
+  const registros = (data ?? []).map(mapRegistro);
+  await preencherNomeClienteFornecedor(registros);
+  return { registros };
 }
 
 export async function alternarFavorito(id: number): Promise<{ id: number; favorito: number }> {
