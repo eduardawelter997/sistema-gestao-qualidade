@@ -15,7 +15,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
+import { RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 
 import Header from '../components/Header';
 import RegistroCard from '../components/RegistroCard';
@@ -87,6 +87,15 @@ export default function BuscaScreen() {
     return () => clearTimeout(timer);
   }, [carregar]);
 
+  // A tela fica registrada como "aba escondida" (não desmonta ao trocar de
+  // aba), então sem isso a lista ficava com dados antigos até fechar e
+  // reabrir o app — recarrega sempre que a aba Busca ganha foco de novo.
+  useFocusEffect(
+    useCallback(() => {
+      carregar();
+    }, [carregar])
+  );
+
   async function onFavoritar(id: number) {
     // Atualiza na tela imediatamente (otimista) e depois confirma na API
     setRegistros((atual) =>
@@ -104,15 +113,25 @@ export default function BuscaScreen() {
       <Header />
 
       {/* Barra de busca */}
-      <View style={styles.buscaWrapper}>
-        <Ionicons name="search" size={18} color={colors.textSecondary} />
-        <TextInput
-          style={styles.buscaInput}
-          placeholder="Nº da OP, cliente, fornecedor ou produto..."
-          placeholderTextColor={colors.placeholder}
-          value={busca}
-          onChangeText={setBusca}
-        />
+      <View style={styles.linhaBusca}>
+        <View style={styles.buscaWrapper}>
+          <Ionicons name="search" size={18} color={colors.textSecondary} />
+          <TextInput
+            style={styles.buscaInput}
+            placeholder="Nº da OP, cliente, fornecedor ou produto..."
+            placeholderTextColor={colors.placeholder}
+            value={busca}
+            onChangeText={setBusca}
+          />
+        </View>
+        <TouchableOpacity
+          style={styles.botaoAtualizar}
+          onPress={carregar}
+          disabled={carregando}
+          hitSlop={8}
+        >
+          <Ionicons name="refresh" size={20} color={colors.primary} />
+        </TouchableOpacity>
       </View>
 
       {/* Filtros por tipo */}
@@ -220,14 +239,30 @@ export default function BuscaScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.screenBg },
+  linhaBusca: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginHorizontal: 16,
+    marginTop: 12,
+  },
   buscaWrapper: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: colors.cardBg,
     borderRadius: 10,
     paddingHorizontal: 12,
-    marginHorizontal: 16,
-    marginTop: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  botaoAtualizar: {
+    width: 44,
+    height: 44,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.cardBg,
     borderWidth: 1,
     borderColor: colors.border,
   },
