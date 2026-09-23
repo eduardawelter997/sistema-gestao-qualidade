@@ -12,7 +12,6 @@ import {
   TouchableOpacity,
   Image,
   ActivityIndicator,
-  Modal,
 } from 'react-native';
 import {
   useNavigation,
@@ -24,6 +23,7 @@ import { Ionicons } from '@expo/vector-icons';
 
 import { colors } from '../theme/colors';
 import StatusBadge from '../components/StatusBadge';
+import VisualizadorImagem from '../components/VisualizadorImagem';
 import { AppTabParamList } from '../navigation/types';
 import {
   Registro,
@@ -67,29 +67,7 @@ function LinhaFotos({ anexos }: { anexos: Anexo[] }) {
         ))}
       </ScrollView>
 
-      <Modal
-        visible={!!imagemAmpliada}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setImagemAmpliada(null)}
-      >
-        <TouchableOpacity
-          style={styles.fundoModal}
-          activeOpacity={1}
-          onPress={() => setImagemAmpliada(null)}
-        >
-          <TouchableOpacity
-            style={styles.botaoFecharModal}
-            onPress={() => setImagemAmpliada(null)}
-            hitSlop={12}
-          >
-            <Ionicons name="close" size={28} color="#FFF" />
-          </TouchableOpacity>
-          {!!imagemAmpliada && (
-            <Image source={{ uri: imagemAmpliada }} style={styles.imagemAmpliada} resizeMode="contain" />
-          )}
-        </TouchableOpacity>
-      </Modal>
+      <VisualizadorImagem url={imagemAmpliada} aoFechar={() => setImagemAmpliada(null)} />
     </>
   );
 }
@@ -405,21 +383,5 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     marginTop: 20,
     paddingHorizontal: 8,
-  },
-  fundoModal: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.9)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  botaoFecharModal: {
-    position: 'absolute',
-    top: 48,
-    right: 20,
-    zIndex: 1,
-  },
-  imagemAmpliada: {
-    width: '100%',
-    height: '80%',
   },
 });

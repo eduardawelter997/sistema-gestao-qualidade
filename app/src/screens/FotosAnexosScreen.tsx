@@ -12,7 +12,6 @@ import {
   TouchableOpacity,
   Image,
   ActivityIndicator,
-  Modal,
   Linking,
 } from 'react-native';
 import { useRoute, useNavigation, useFocusEffect, RouteProp } from '@react-navigation/native';
@@ -23,6 +22,7 @@ import { colors } from '../theme/colors';
 import { AppTabParamList } from '../navigation/types';
 import { Anexo, listarAnexos, enviarAnexo, excluirAnexo } from '../services/api';
 import { alertar, confirmar } from '../utils/alerta';
+import VisualizadorImagem from '../components/VisualizadorImagem';
 
 const ROTULO_TIPO: Record<string, string> = {
   op: 'Ordem de Produção',
@@ -206,33 +206,7 @@ export default function FotosAnexosScreen() {
         </TouchableOpacity>
       </ScrollView>
 
-      <Modal
-        visible={!!imagemAmpliada}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setImagemAmpliada(null)}
-      >
-        <TouchableOpacity
-          style={styles.fundoModal}
-          activeOpacity={1}
-          onPress={() => setImagemAmpliada(null)}
-        >
-          <TouchableOpacity
-            style={styles.botaoFecharModal}
-            onPress={() => setImagemAmpliada(null)}
-            hitSlop={12}
-          >
-            <Ionicons name="close" size={28} color="#FFF" />
-          </TouchableOpacity>
-          {!!imagemAmpliada && (
-            <Image
-              source={{ uri: imagemAmpliada }}
-              style={styles.imagemAmpliada}
-              resizeMode="contain"
-            />
-          )}
-        </TouchableOpacity>
-      </Modal>
+      <VisualizadorImagem url={imagemAmpliada} aoFechar={() => setImagemAmpliada(null)} />
     </View>
   );
 }
@@ -367,21 +341,5 @@ const styles = StyleSheet.create({
     color: '#FFF',
     fontSize: 16,
     fontWeight: '700',
-  },
-  fundoModal: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.9)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  botaoFecharModal: {
-    position: 'absolute',
-    top: 48,
-    right: 20,
-    zIndex: 1,
-  },
-  imagemAmpliada: {
-    width: '100%',
-    height: '80%',
   },
 });

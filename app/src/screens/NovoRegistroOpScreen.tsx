@@ -58,18 +58,18 @@ function dataDeHoje() {
   return `${dia}/${mes}/${hoje.getFullYear()}`;
 }
 
-async function escolherFoto() {
+async function escolherFotos() {
   const resultado = await ImagePicker.launchImageLibraryAsync({
     mediaTypes: ImagePicker.MediaTypeOptions.Images,
     quality: 0.7,
+    allowsMultipleSelection: true,
   });
-  if (resultado.canceled || !resultado.assets?.[0]) return null;
-  const asset = resultado.assets[0];
-  return {
+  if (resultado.canceled || !resultado.assets?.length) return [];
+  return resultado.assets.map((asset, i) => ({
     uri: asset.uri,
-    name: asset.fileName || `foto-${Date.now()}.jpg`,
+    name: asset.fileName || `foto-${Date.now()}-${i}.jpg`,
     type: asset.mimeType || 'image/jpeg',
-  };
+  }));
 }
 
 export default function NovoRegistroOpScreen() {
@@ -91,7 +91,7 @@ export default function NovoRegistroOpScreen() {
 
   const [processo, setProcesso] = useState('');
   const [detalhes, setDetalhes] = useState('');
-  const [foto, setFoto] = useState<{ uri: string; name: string; type: string } | null>(null);
+  const [fotos, setFotos] = useState<{ uri: string; name: string; type: string }[]>([]);
   const [carregando, setCarregando] = useState(modoEdicao);
   const [salvando, setSalvando] = useState(false);
 
@@ -114,7 +114,7 @@ export default function NovoRegistroOpScreen() {
       setSituacao('Em andamento');
       setProcesso('');
       setDetalhes('');
-      setFoto(null);
+      setFotos([]);
       setMostrarTipos(false);
       setMostrarResponsaveis(false);
       setMostrarSituacoes(false);
@@ -136,9 +136,13 @@ export default function NovoRegistroOpScreen() {
       .finally(() => setCarregando(false));
   }, [registroId]);
 
-  async function onEscolherFoto() {
-    const arquivo = await escolherFoto();
-    if (arquivo) setFoto(arquivo);
+  async function onEscolherFotos() {
+    const novas = await escolherFotos();
+    if (novas.length) setFotos((atual) => [...atual, ...novas]);
+  }
+
+  function onRemoverFoto(index: number) {
+    setFotos((atual) => atual.filter((_, i) => i !== index));
   }
 
   async function handleSalvar() {
@@ -181,8 +185,8 @@ export default function NovoRegistroOpScreen() {
         idParaAnexo = resultado.id;
       }
 
-      if (foto && idParaAnexo) {
-        await enviarAnexo(idParaAnexo, foto);
+      if (fotos.length && idParaAnexo) {
+        await Promise.all(fotos.map((f) => enviarAnexo(idParaAnexo as number, f)));
       }
 
       alertar('Sucesso', modoEdicao ? 'Registro atualizado com sucesso!' : 'Registro salvo com sucesso!');
@@ -339,13 +343,28 @@ export default function NovoRegistroOpScreen() {
         />
 
         {/* Foto ou documento */}
-        <TouchableOpacity style={styles.botaoSecundario} activeOpacity={0.7} onPress={onEscolherFoto}>
+        <TouchableOpacity style={styles.botaoSecundario} activeOpacity={0.7} onPress={onEscolherFotos}>
           <Ionicons name="camera-outline" size={16} color={colors.primary} />
           <Text style={styles.botaoSecundarioTexto}>
-            {foto ? ' Trocar foto ou documento' : ' Adicionar foto ou documento'}
+            {fotos.length ? ' Adicionar mais fotos' : ' Adicionar foto ou documento'}
           </Text>
         </TouchableOpacity>
-        {!!foto && <Image source={{ uri: foto.uri }} style={styles.previewFoto} />}
+        {!!fotos.length && (
+          <View style={styles.previewLinha}>
+            {fotos.map((f, index) => (
+              <View key={f.uri + index} style={styles.previewItem}>
+                <Image source={{ uri: f.uri }} style={styles.previewFoto} />
+                <TouchableOpacity
+                  style={styles.previewRemover}
+                  onPress={() => onRemoverFoto(index)}
+                  hitSlop={8}
+                >
+                  <Ionicons name="close-circle" size={20} color={colors.danger} />
+                </TouchableOpacity>
+              </View>
+            ))}
+          </View>
+        )}
 
         {/* Botão Salvar */}
         <TouchableOpacity
@@ -497,11 +516,26 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     fontSize: 13,
   },
+  previewLinha: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+    marginTop: 10,
+  },
+  previewItem: {
+    position: 'relative',
+  },
+  previewRemover: {
+    position: 'absolute',
+    top: -6,
+    right: -6,
+    backgroundColor: '#FFF',
+    borderRadius: 10,
+  },
   previewFoto: {
     width: 90,
     height: 90,
     borderRadius: 8,
-    marginTop: 10,
     backgroundColor: colors.border,
   },
   botaoSalvar: {
